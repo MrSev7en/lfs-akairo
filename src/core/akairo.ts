@@ -82,11 +82,14 @@ export class Akairo {
     port: number;
     password: string;
   }): void {
-    // We're hidding CNL packet (when user left), because it modifies player list and it can cause bugs inside modules.
-    new Event(this, [PacketType.ISP_CNL]);
-
     this.options = options;
-    this.modules.forEach((module) => module.bind());
+
+    // We're hidding CNL packet (when user left), because it modifies player list and it can cause bugs inside modules.
+    new Event(this, [PacketType.ISP_CNL], () => {
+      setTimeout(() => {
+        this.modules.forEach((module) => module.bind());
+      });
+    });
 
     // Now we bind CNL packet (excluding others).
     new Event(this, [
