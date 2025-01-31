@@ -30,6 +30,7 @@ export class Event {
   public constructor(
     public readonly akairo: Akairo,
     exclude?: BindingPackets[],
+    callback?: () => void,
   ) {
     if (exclude?.includes(PacketType.ISP_NCN)) {
       this.akairo.insim.addListener(PacketType.ISP_NCN, (packet) =>
@@ -86,6 +87,7 @@ export class Event {
     }
 
     logger.info('Event listener was successfully load.');
+    callback?.();
   }
 
   private onPlayerConnectHandler(packet: IS_NCN): void {
