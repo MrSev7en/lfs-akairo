@@ -150,7 +150,9 @@ export class Module {
 
     this.events.forEach((handlers, type) => {
       handlers.forEach((handler) => {
-        this.akairo.insim.addListener(type, this.createSafeListener(handler));
+        setTimeout(() => {
+          this.akairo.insim.addListener(type, this.createSafeListener(handler));
+        });
       });
     });
 
@@ -232,7 +234,7 @@ export class Module {
       (player) =>
         player.uniqueId === packet.UCID ||
         player.playerId === packet.PLID ||
-        packet.Info?.some((info) => player.playerId === info.PLID),
+        packet.Info?.some?.((info) => player.playerId === info.PLID),
     ) as Player;
   }
 
