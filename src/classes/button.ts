@@ -59,7 +59,7 @@ export class Button {
   public interval!: NodeJS.Timeout;
 
   /** Handler for update events */
-  private onUpdateHandler!: () => void;
+  private onUpdateHandler!: (button: Button) => void;
 
   public constructor(public readonly akairo: Akairo) {
     this.style = () => ButtonStyle.ISB_CLICK;
@@ -227,6 +227,15 @@ export class Button {
   }
 
   /**
+   * Appends a child button to this button
+   * @param callback A single button callback (already instantiated)
+   */
+  public append(callback: (button: Button) => Button): this {
+    callback(new Button(this.akairo));
+    return this;
+  }
+
+  /**
    * Appends one or more child buttons to this button
    * @param buttons A single button, array of buttons, or null
    */
@@ -307,7 +316,7 @@ export class Button {
     }
 
     if (typeof this.onUpdateHandler === 'function') {
-      this.onUpdateHandler();
+      this.onUpdateHandler(this);
     }
 
     return this;
@@ -317,7 +326,7 @@ export class Button {
    * Sets a handler for update events
    * @param callback Function to be called when the button is updated
    */
-  public onUpdate(callback: () => void) {
+  public onUpdate(callback: (button: Button) => void) {
     this.onUpdateHandler = callback;
   }
 
