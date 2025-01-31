@@ -231,7 +231,12 @@ export class Button {
    * @param callback A single button callback (already instantiated)
    */
   public append(callback: (button: Button) => Button): this {
-    callback(new Button(this.akairo));
+    const button = new Button(this.akairo);
+    button.playerId = this.playerId;
+
+    callback(button);
+    this.appendChild(button);
+
     return this;
   }
 
