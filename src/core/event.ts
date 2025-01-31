@@ -15,43 +15,75 @@ import {
   PacketType,
 } from 'node-insim/packets';
 
+type BindingPackets =
+  | PacketType.ISP_NCN
+  | PacketType.ISP_NCI
+  | PacketType.ISP_CNL
+  | PacketType.ISP_NPL
+  | PacketType.ISP_PLP
+  | PacketType.ISP_PLL
+  | PacketType.ISP_TOC
+  | PacketType.ISP_CPR
+  | PacketType.ISP_MCI;
+
 export class Event {
-  public constructor(public readonly akairo: Akairo) {
-    this.akairo.insim.addListener(PacketType.ISP_NCN, (packet) =>
-      this.onPlayerConnectHandler(packet),
-    );
+  public constructor(
+    public readonly akairo: Akairo,
+    exclude?: BindingPackets[],
+  ) {
+    if (exclude?.includes(PacketType.ISP_NCN)) {
+      this.akairo.insim.addListener(PacketType.ISP_NCN, (packet) =>
+        this.onPlayerConnectHandler(packet),
+      );
+    }
 
-    this.akairo.insim.addListener(PacketType.ISP_NCI, (packet) =>
-      this.onPlayerDetailsHandler(packet),
-    );
+    if (exclude?.includes(PacketType.ISP_NCI)) {
+      this.akairo.insim.addListener(PacketType.ISP_NCI, (packet) =>
+        this.onPlayerDetailsHandler(packet),
+      );
+    }
 
-    this.akairo.insim.addListener(PacketType.ISP_CNL, (packet) =>
-      this.onPlayerLeaveHandler(packet),
-    );
+    if (exclude?.includes(PacketType.ISP_CNL)) {
+      this.akairo.insim.addListener(PacketType.ISP_CNL, (packet) =>
+        this.onPlayerLeftHandler(packet),
+      );
+    }
 
-    this.akairo.insim.addListener(PacketType.ISP_NPL, (packet) =>
-      this.onPlayerGoesToTrackHandler(packet),
-    );
+    if (exclude?.includes(PacketType.ISP_NPL)) {
+      this.akairo.insim.addListener(PacketType.ISP_NPL, (packet) =>
+        this.onPlayerGoesToTrackHandler(packet),
+      );
+    }
 
-    this.akairo.insim.addListener(PacketType.ISP_PLP, (packet) =>
-      this.onPlayerGoesToPitHandler(packet),
-    );
+    if (exclude?.includes(PacketType.ISP_PLP)) {
+      this.akairo.insim.addListener(PacketType.ISP_PLP, (packet) =>
+        this.onPlayerGoesToPitHandler(packet),
+      );
+    }
 
-    this.akairo.insim.addListener(PacketType.ISP_PLL, (packet) =>
-      this.onPlayerGoesToSpectateHandler(packet),
-    );
+    if (exclude?.includes(PacketType.ISP_PLL)) {
+      this.akairo.insim.addListener(PacketType.ISP_PLL, (packet) =>
+        this.onPlayerGoesToSpectateHandler(packet),
+      );
+    }
 
-    this.akairo.insim.addListener(PacketType.ISP_TOC, (packet) =>
-      this.onPlayerChangeHandler(packet),
-    );
+    if (exclude?.includes(PacketType.ISP_TOC)) {
+      this.akairo.insim.addListener(PacketType.ISP_TOC, (packet) =>
+        this.onPlayerChangeHandler(packet),
+      );
+    }
 
-    this.akairo.insim.addListener(PacketType.ISP_CPR, (packet) =>
-      this.onPlayerRenameHandler(packet),
-    );
+    if (exclude?.includes(PacketType.ISP_CPR)) {
+      this.akairo.insim.addListener(PacketType.ISP_CPR, (packet) =>
+        this.onPlayerRenameHandler(packet),
+      );
+    }
 
-    this.akairo.insim.addListener(PacketType.ISP_MCI, (packet) =>
-      this.onCarMovementHandler(packet),
-    );
+    if (exclude?.includes(PacketType.ISP_MCI)) {
+      this.akairo.insim.addListener(PacketType.ISP_MCI, (packet) =>
+        this.onCarMovementHandler(packet),
+      );
+    }
 
     logger.info('Event listener was successfully load.');
   }
@@ -83,7 +115,7 @@ export class Event {
     }
   }
 
-  private onPlayerLeaveHandler(packet: IS_CNL): void {
+  private onPlayerLeftHandler(packet: IS_CNL): void {
     const index = this.akairo.players.list.findIndex(
       (player) => player.uniqueId === packet.UCID,
     );
