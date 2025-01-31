@@ -25,7 +25,8 @@ export class Player {
   /** Game language */
   public gameLanguage!: Language;
 
-  private selfData = {};
+  /** Attributes saved in player instance */
+  public selfData = {};
 
   private buttons!: { id: string; instance: Button }[];
 
