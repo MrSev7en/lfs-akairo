@@ -84,24 +84,28 @@ export class Akairo {
   }): void {
     this.options = options;
 
-    // We're hidding CNL packet (when user left), because it modifies player list and it can cause bugs inside modules.
-    new Event(this, [PacketType.ISP_CNL], () => {
-      setTimeout(() => {
-        this.modules.forEach((module) => module.bind());
-      });
-    });
+    // We're hidding some packets, because it modifies player list and it can cause exceptions inside modules.
+    new Event(
+      this,
+      [PacketType.ISP_CNL, PacketType.ISP_PLP, PacketType.ISP_PLL],
+      () => {
+        setTimeout(() => {
+          this.modules.forEach((module) => module.bind());
 
-    // Now we bind CNL packet (excluding others).
-    new Event(this, [
-      PacketType.ISP_NCN,
-      PacketType.ISP_NCI,
-      PacketType.ISP_NPL,
-      PacketType.ISP_PLP,
-      PacketType.ISP_PLL,
-      PacketType.ISP_TOC,
-      PacketType.ISP_CPR,
-      PacketType.ISP_MCI,
-    ]);
+          // Now we bind hidden packets (excluding others).
+          setTimeout(() => {
+            new Event(this, [
+              PacketType.ISP_NCN,
+              PacketType.ISP_NCI,
+              PacketType.ISP_NPL,
+              PacketType.ISP_TOC,
+              PacketType.ISP_CPR,
+              PacketType.ISP_MCI,
+            ]);
+          });
+        });
+      },
+    );
 
     this.insim.connect({
       Host: this.options.host,

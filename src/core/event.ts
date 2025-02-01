@@ -32,55 +32,55 @@ export class Event {
     exclude?: BindingPackets[],
     callback?: () => void,
   ) {
-    if (exclude?.includes(PacketType.ISP_NCN)) {
+    if (!exclude?.includes(PacketType.ISP_NCN)) {
       this.akairo.insim.addListener(PacketType.ISP_NCN, (packet) =>
         this.onPlayerConnectHandler(packet),
       );
     }
 
-    if (exclude?.includes(PacketType.ISP_NCI)) {
+    if (!exclude?.includes(PacketType.ISP_NCI)) {
       this.akairo.insim.addListener(PacketType.ISP_NCI, (packet) =>
         this.onPlayerDetailsHandler(packet),
       );
     }
 
-    if (exclude?.includes(PacketType.ISP_CNL)) {
+    if (!exclude?.includes(PacketType.ISP_CNL)) {
       this.akairo.insim.addListener(PacketType.ISP_CNL, (packet) =>
         this.onPlayerLeftHandler(packet),
       );
     }
 
-    if (exclude?.includes(PacketType.ISP_NPL)) {
+    if (!exclude?.includes(PacketType.ISP_NPL)) {
       this.akairo.insim.addListener(PacketType.ISP_NPL, (packet) =>
-        this.onPlayerGoesToTrackHandler(packet),
+        this.onPlayerTrackHandler(packet),
       );
     }
 
-    if (exclude?.includes(PacketType.ISP_PLP)) {
+    if (!exclude?.includes(PacketType.ISP_PLP)) {
       this.akairo.insim.addListener(PacketType.ISP_PLP, (packet) =>
-        this.onPlayerGoesToPitHandler(packet),
+        this.onPlayerPitHandler(packet),
       );
     }
 
-    if (exclude?.includes(PacketType.ISP_PLL)) {
+    if (!exclude?.includes(PacketType.ISP_PLL)) {
       this.akairo.insim.addListener(PacketType.ISP_PLL, (packet) =>
-        this.onPlayerGoesToSpectateHandler(packet),
+        this.onPlayerSpectateHandler(packet),
       );
     }
 
-    if (exclude?.includes(PacketType.ISP_TOC)) {
+    if (!exclude?.includes(PacketType.ISP_TOC)) {
       this.akairo.insim.addListener(PacketType.ISP_TOC, (packet) =>
         this.onPlayerChangeHandler(packet),
       );
     }
 
-    if (exclude?.includes(PacketType.ISP_CPR)) {
+    if (!exclude?.includes(PacketType.ISP_CPR)) {
       this.akairo.insim.addListener(PacketType.ISP_CPR, (packet) =>
         this.onPlayerRenameHandler(packet),
       );
     }
 
-    if (exclude?.includes(PacketType.ISP_MCI)) {
+    if (!exclude?.includes(PacketType.ISP_MCI)) {
       this.akairo.insim.addListener(PacketType.ISP_MCI, (packet) =>
         this.onCarMovementHandler(packet),
       );
@@ -127,7 +127,7 @@ export class Event {
     }
   }
 
-  private onPlayerGoesToTrackHandler(packet: IS_NPL): void {
+  private onPlayerTrackHandler(packet: IS_NPL): void {
     const player =
       this.akairo.players.getByUniqueId(packet.UCID) ||
       this.akairo.players.getByPlayerId(packet.PLID);
@@ -156,7 +156,7 @@ export class Event {
     }
   }
 
-  private onPlayerGoesToPitHandler(packet: IS_PLP): void {
+  private onPlayerPitHandler(packet: IS_PLP): void {
     const player = this.akairo.players.getByPlayerId(packet.PLID);
 
     if (player) {
@@ -165,7 +165,7 @@ export class Event {
     }
   }
 
-  private onPlayerGoesToSpectateHandler(packet: IS_PLL): void {
+  private onPlayerSpectateHandler(packet: IS_PLL): void {
     const player = this.akairo.players.getByPlayerId(packet.PLID);
 
     if (player) {
