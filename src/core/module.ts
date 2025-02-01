@@ -229,15 +229,6 @@ export class Module {
     };
   }
 
-  private getPlayerFromPacket(packet: IPacket): Player {
-    return this.akairo.players.list.find(
-      (player) =>
-        player.uniqueId === packet.UCID ||
-        player.playerId === packet.PLID ||
-        packet.Info?.some?.((info) => player.playerId === info.PLID),
-    ) as Player;
-  }
-
   private async handleKnownCommand(
     command: string,
     args: string[],
@@ -268,5 +259,20 @@ export class Module {
     );
 
     await Promise.all(promises);
+  }
+
+  private getPlayerFromPacket(packet: IPacket): Player {
+    return this.akairo.players.list.find(
+      (player) =>
+        (typeof player.uniqueId === 'number' &&
+          player.uniqueId === packet.UCID) ||
+        (typeof player.playerId === 'number' &&
+          player.playerId === packet.PLID) ||
+        packet.Info?.some?.(
+          (info) =>
+            typeof player.playerId === 'number' &&
+            player.playerId === info.PLID,
+        ),
+    ) as Player;
   }
 }
