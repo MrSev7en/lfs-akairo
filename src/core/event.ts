@@ -123,6 +123,10 @@ export class Event {
     );
 
     if (index !== -1) {
+      this.akairo.tags.releaseAllUniqueIds(
+        this.akairo.players.list[index].uniqueId,
+      );
+
       this.akairo.players.list.splice(index, 1);
     }
   }

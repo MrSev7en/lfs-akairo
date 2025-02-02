@@ -43,4 +43,15 @@ export class Tags {
       this.instances.delete(key);
     }
   }
+
+  public releaseAllUniqueIds(playerId: number): void {
+    const playerIdStr = playerId !== null ? String(playerId) : 'null';
+    const keysToDelete = [...this.instances.keys()].filter((key) =>
+      key.startsWith(`${playerIdStr}:`),
+    );
+
+    for (const key of keysToDelete) {
+      this.instances.delete(key);
+    }
+  }
 }
