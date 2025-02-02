@@ -11,7 +11,7 @@ import {
 
 export class Button {
   /** Unique identifier for the button */
-  public id!: number;
+  public id!: () => number;
 
   /** Function that returns the button's style */
   public style!: () => ButtonStyle | ButtonTextColour;
@@ -62,6 +62,7 @@ export class Button {
   private onUpdateHandler!: (button: Button) => void;
 
   public constructor(public readonly akairo: Akairo) {
+    this.id = () => undefined as never;
     this.style = () => ButtonStyle.ISB_CLICK;
     this.title = () => '';
     this.caption = () => undefined as never;
@@ -72,7 +73,7 @@ export class Button {
     this.top = () => 0;
     this.playerId = () => 0;
     this.clickOnce = () => false;
-    this.isVisible = () => false;
+    this.isVisible = () => true;
   }
 
   /**
@@ -204,7 +205,7 @@ export class Button {
       this.caption() || this.length() ? PacketType.ISP_BTT : PacketType.ISP_BTC;
 
     const bind = (packet: IS_BTT | IS_BTC): void => {
-      if (packet.ClickID === this.id && packet.UCID === this.playerId()) {
+      if (packet.ClickID === this.id() && packet.UCID === this.playerId()) {
         const text = packet instanceof IS_BTT ? packet.Text : '';
 
         if (this.clickOnce()) {
@@ -234,8 +235,8 @@ export class Button {
     const button = new Button(this.akairo);
     button.playerId = this.playerId;
 
-    callback(button);
     this.appendChild(button);
+    callback(button);
 
     return this;
   }
@@ -278,51 +279,116 @@ export class Button {
   }
 
   /**
+   * Creates the button and starts auto-update if enabled
+   * @param disableAutoUpdate Whether to disable automatic updates
+   */
+  public create(disableAutoUpdate?: boolean): Button {
+    if (typeof this.id() === 'undefined') {
+      // Create an clone of generated unique id
+      const { id } = Object.assign(
+        {},
+        { ...{ id: this.akairo.tags.getUniqueId(this) } },
+      );
+
+      this.id = () => id;
+    }
+
+    if (!disableAutoUpdate && !this.interval) {
+      this.interval = setInterval(() => {
+        this.update();
+      }, this.akairo.settings?.interface ?? 1000);
+    }
+
+    this.update();
+    return this;
+  }
+
+  /**
    * Updates the button's state and appearance
    */
   public update(): Button {
-    if (this.isVisible()) {
-      this.akairo.insim.send(
-        new IS_BTN({
-          ClickID: Math.min(Math.max(this.id, 0), 239),
-          BStyle: this.style(),
-          Text: `\0${this.caption() ?? '\b'}\0${this.title() ?? ''}`,
-          TypeIn: Math.min(Math.max(this.length(), 0), 95),
-          W: Math.min(Math.max(this.width(), 0), 200),
-          H: Math.min(Math.max(this.height(), 0), 200),
-          L: Math.min(Math.max(this.left(), 0), 200),
-          T: Math.min(Math.max(this.top(), 0), 200),
-          UCID: this.playerId() || 255,
-          ReqI: 2,
-        }),
-      );
-
-      for (const child of this.childs) {
-        if (typeof child.style === 'undefined') {
-          child.style = this.style;
-        }
-
-        if (typeof child.playerId === 'undefined') {
-          child.playerId = this.playerId;
-        }
-
-        if (typeof child.isVisible === 'undefined') {
-          child.isVisible = this.isVisible;
-        }
-
-        if (typeof child.id === 'undefined') {
-          child.create();
-        } else {
-          child.update();
-        }
-      }
-    } else {
-      this.destroy();
+    if (typeof this.id() === 'undefined') {
+      return this;
     }
+
+    this.akairo.insim.send(
+      new IS_BTN({
+        ClickID: Math.min(Math.max(this.id(), 0), 239),
+        BStyle: this.isVisible() ? this.style() : ButtonStyle.ISB_LEFT,
+        Text: `\0${this.caption() ?? '\b'}\0${this.isVisible() ? (this.title() ?? '') : ''}`,
+        TypeIn: Math.min(Math.max(this.length(), 0), 95),
+        W: Math.min(Math.max(this.width(), 0), 200),
+        H: Math.min(Math.max(this.height(), 0), 200),
+        L: Math.min(Math.max(this.left(), 0), 200),
+        T: Math.min(Math.max(this.top(), 0), 200),
+        UCID: this.playerId() || 255,
+        ReqI: 2,
+      }),
+    );
 
     if (typeof this.onUpdateHandler === 'function') {
       this.onUpdateHandler(this);
     }
+
+    for (const child of this.childs) {
+      if (typeof child.style === 'undefined') {
+        child.style = this.style;
+      }
+
+      if (typeof child.playerId === 'undefined') {
+        child.playerId = this.playerId;
+      }
+
+      if (typeof child.isVisible === 'undefined') {
+        child.isVisible = this.isVisible;
+      }
+
+      child.create();
+    }
+
+    return this;
+  }
+
+  /**
+   * Destroys the button, removing it from display
+   */
+  public destroy(): Button {
+    if (typeof this.id() === 'undefined') {
+      return this;
+    }
+
+    this.akairo.insim.send(
+      new IS_BFN({
+        UCID: this.playerId(),
+        ClickID: Math.min(Math.max(this.id(), 0), 239),
+      }),
+    );
+
+    this.dispose();
+    this.isVisible = () => false;
+
+    for (const child of this.childs) {
+      child.destroy();
+    }
+
+    return this;
+  }
+
+  /**
+   * Disposes of the button, cleaning up resources without visual updates
+   */
+  public dispose(): Button {
+    if (this.interval) {
+      clearInterval(this.interval);
+      this.interval = undefined as never;
+    }
+
+    if (this.unbind) {
+      this.unbind();
+    }
+
+    this.akairo.tags.releaseUniqueId(this.playerId(), this.id());
+    this.id = () => undefined as never;
 
     return this;
   }
@@ -333,77 +399,5 @@ export class Button {
    */
   public onUpdate(callback: (button: Button) => void) {
     this.onUpdateHandler = callback;
-  }
-
-  /**
-   * Creates the button and starts auto-update if enabled
-   * @param disableAutoUpdate Whether to disable automatic updates
-   */
-  public create(disableAutoUpdate?: boolean): Button {
-    if (typeof this.id === 'undefined') {
-      this.id = this.akairo.tags.getUniqueId(this);
-    }
-
-    if (!disableAutoUpdate && !this.interval) {
-      this.interval = setInterval(() => {
-        this.update();
-      }, this.akairo.settings?.interval ?? 1000);
-    }
-
-    this.isVisible = () => true;
-    this.update();
-
-    return this;
-  }
-
-  /**
-   * Destroys the button, clearing intervals and removing from display
-   */
-  public destroy(): Button {
-    if (typeof this.id === 'undefined') {
-      return this;
-    }
-
-    if (this.interval) {
-      clearInterval(this.interval);
-      this.interval = undefined as never;
-    }
-
-    if (this.unbind) {
-      this.unbind();
-    }
-
-    for (const child of this.childs) {
-      child.destroy();
-    }
-
-    this.isVisible = () => false;
-
-    this.akairo.tags.releaseUniqueId(this.playerId(), this.id);
-    this.akairo.insim.send(
-      new IS_BFN({ UCID: this.playerId(), ClickID: this.id }),
-    );
-
-    return this;
-  }
-
-  /**
-   * Disposes of the button, cleaning up resources without visual updates
-   */
-  public dispose(): Button {
-    if (typeof this.id === 'undefined') {
-      return this;
-    }
-
-    for (const child of this.childs) {
-      child.dispose();
-    }
-
-    if (this.unbind) {
-      this.unbind();
-    }
-
-    this.akairo.tags.releaseUniqueId(this.playerId(), this.id);
-    return this;
   }
 }

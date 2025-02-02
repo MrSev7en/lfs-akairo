@@ -9,7 +9,7 @@ export class Tags {
 
   public getUniqueId(instance: Button): number {
     for (let id = 0; id < this.maxId; id++) {
-      const key = `${instance.playerId ?? null}:${id}`;
+      const key = `${instance.playerId() ?? null}:${id}`;
 
       if (!this.instances.has(key)) {
         this.instances.set(key, instance);
@@ -18,6 +18,7 @@ export class Tags {
     }
 
     const oldestId = [...this.instances.keys()]
+      .filter((key) => key.split(':').map(Number)[0] === instance.playerId())
       .map((key) => key.split(':').map(Number))
       .sort((a, b) => a[1] - b[1])[0];
 
@@ -29,8 +30,9 @@ export class Tags {
       this.instances.delete(oldestKey);
     }
 
-    const newKey = `${instance.playerId ?? null}:${oldestId[1]}`;
+    const newKey = `${instance.playerId() ?? null}:${oldestId[1]}`;
     this.instances.set(newKey, instance);
+
     return oldestId[1];
   }
 

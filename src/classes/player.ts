@@ -28,11 +28,7 @@ export class Player {
   /** Attributes saved in player instance */
   public selfData = {};
 
-  private buttons!: { id: string; instance: Button }[];
-
-  public constructor(public readonly akairo: Akairo) {
-    this.buttons = [];
-  }
+  public constructor(public readonly akairo: Akairo) {}
 
   /**
    * Translate an content to player.
@@ -63,25 +59,10 @@ export class Player {
   }
 
   /**
-   * Create or get an button instance of player.
-   * @param id ID of instance (optional, useful to get or destroy it later)
+   * Create an button instance to player.
    */
-  public button(id?: string): Button {
-    const index = this.buttons.findIndex((button) => button.id === id);
-
-    if (index === -1) {
-      const instance = new Button(this.akairo).setPlayerId(() => this.uniqueId);
-
-      this.buttons.push({
-        id: id ?? String(Date.now() * Math.random() * 100),
-        instance,
-      });
-
-      return instance;
-    }
-
-    const button = this.buttons[index];
-    return button.instance;
+  public button(): Button {
+    return new Button(this.akairo).setPlayerId(() => this.uniqueId);
   }
 
   /**

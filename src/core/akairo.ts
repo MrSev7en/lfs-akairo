@@ -47,7 +47,8 @@ export class Akairo {
    * @param settings.id Unique identifier for InSim
    * @param settings.name Display name for InSim
    * @param settings.prefix Command prefix for InSim
-   * @param settings.interval Update interval in milliseconds (used in IS_MCI and button interface updates)
+   * @param settings.interval Update interval in milliseconds (used in IS_MCI updates)
+   * @param settings.interface Interface update interval in milliseconds (used in button interface updates)
    * @param settings.flags InSim flags for connection configuration
    */
   public constructor(
@@ -56,6 +57,7 @@ export class Akairo {
       name?: string;
       prefix?: string;
       interval?: number;
+      interface?: number;
       flags?: InSimFlags;
     },
   ) {
