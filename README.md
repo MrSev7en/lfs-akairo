@@ -20,19 +20,26 @@ npm install lfs-akairo
 
 ## Example Usage
 
-```typescript
-import { Akairo, Module, Player } from 'lfs-akairo';
-import { PacketType } from 'node-insim/packets';
+```javascript
+const { Akairo, Module, Player } = require('lfs-akairo');
+const { PacketType } = require('node-insim/packets');
 
 class ExampleModule extends Module {
-  public constructor(public readonly akairo: Akairo) {
+  constructor(akairo) {
     super(akairo);
 
-    this.onPacket(PacketType.ISP_NCI, this.onPlayerJoin);
+    this.onPacket(PacketType.ISP_NCI, this.onPlayerJoin.bind(this));
+    this.onCommand('help', this.onHelpCommand.bind(this));
   }
 
-  public async onPlayerJoin(player: Player) {
+  async onPlayerJoin(player) {
     player.message(`Hello, ${player.userName}!`);
+  }
+
+  async onHelpCommand(player, args) {
+    player
+      .message('^7Hi, this is the help command!')
+      .message('^6Is this really useful?');
   }
 }
 
