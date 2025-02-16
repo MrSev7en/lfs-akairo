@@ -119,7 +119,10 @@ export class Event {
 
   private onPlayerLeftHandler(packet: IS_CNL): void {
     const index = this.akairo.players.list.findIndex(
-      (player) => player.uniqueId === packet.UCID,
+      (player) =>
+        typeof player.uniqueId === 'number' &&
+        player.uniqueId > 0 &&
+        player.uniqueId === packet.UCID,
     );
 
     if (index !== -1) {
@@ -132,9 +135,7 @@ export class Event {
   }
 
   private onPlayerTrackHandler(packet: IS_NPL): void {
-    const player =
-      this.akairo.players.getByUniqueId(packet.UCID) ||
-      this.akairo.players.getByPlayerId(packet.PLID);
+    const player = this.akairo.players.getByUniqueId(packet.UCID);
 
     if (player) {
       player.playerId = packet.PLID;

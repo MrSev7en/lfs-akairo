@@ -37,7 +37,9 @@ export class Tags {
   }
 
   public releaseUniqueId(playerId: number, id: number): void {
-    const key = `${playerId ?? null}:${id}`;
+    const parsedPlayerId =
+      typeof playerId === 'number' && playerId > 0 ? playerId : null;
+    const key = `${parsedPlayerId}:${id}`;
 
     if (this.instances.has(key)) {
       this.instances.delete(key);
@@ -45,9 +47,10 @@ export class Tags {
   }
 
   public releaseAllUniqueIds(playerId: number): void {
-    const playerIdStr = playerId !== null ? String(playerId) : 'null';
-    const keysToDelete = [...this.instances.keys()].filter((key) =>
-      key.startsWith(`${playerIdStr}:`),
+    const parsedPlayerId =
+      typeof playerId === 'number' && playerId > 0 ? playerId : null;
+    const keysToDelete = [...this.instances.keys()].filter(
+      (key) => key.split(':')[0] === String(parsedPlayerId),
     );
 
     for (const key of keysToDelete) {

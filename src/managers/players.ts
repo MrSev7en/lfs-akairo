@@ -15,7 +15,12 @@ export class Players {
    * @param uniqueId The unique identifier of the player
    */
   public getByUniqueId(uniqueId: number): Player {
-    return this.list.find((player) => player.uniqueId === uniqueId) as Player;
+    return this.list.find(
+      (player) =>
+        typeof player.uniqueId === 'number' &&
+        player.uniqueId > 0 &&
+        player.uniqueId === uniqueId,
+    ) as Player;
   }
 
   /**
@@ -23,7 +28,12 @@ export class Players {
    * @param playerId The player ID to search for
    */
   public getByPlayerId(playerId: number): Player {
-    return this.list.find((player) => player.playerId === playerId) as Player;
+    return this.list.find(
+      (player) =>
+        typeof player.playerId === 'number' &&
+        player.playerId > 0 &&
+        player.playerId === playerId,
+    ) as Player;
   }
 
   /**
