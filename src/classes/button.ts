@@ -63,7 +63,7 @@ export class Button {
 
   public constructor(public readonly akairo: Akairo) {
     this.id = () => undefined as never;
-    this.style = () => ButtonStyle.ISB_CLICK;
+    this.style = () => undefined as never;
     this.title = () => '';
     this.caption = () => undefined as never;
     this.length = () => 0;
@@ -71,7 +71,7 @@ export class Button {
     this.height = () => 0;
     this.left = () => 0;
     this.top = () => 0;
-    this.playerId = () => 0;
+    this.playerId = () => undefined as never;
     this.clickOnce = () => false;
     this.isVisible = () => true;
   }
@@ -202,7 +202,9 @@ export class Button {
     }) => void,
   ): Button {
     const type =
-      this.caption() || this.length() ? PacketType.ISP_BTT : PacketType.ISP_BTC;
+      (this.caption() ?? this.length())
+        ? PacketType.ISP_BTT
+        : PacketType.ISP_BTC;
 
     const bind = (packet: IS_BTT | IS_BTC): void => {
       if (packet.ClickID === this.id() && packet.UCID === this.playerId()) {
@@ -294,9 +296,10 @@ export class Button {
     }
 
     if (!disableAutoUpdate && !this.interval) {
-      this.interval = setInterval(() => {
-        this.update();
-      }, this.akairo.settings?.interface ?? 1000);
+      this.interval = setInterval(
+        () => this.update(),
+        this.akairo.settings?.interface ?? 1000,
+      );
     }
 
     this.update();
@@ -321,7 +324,7 @@ export class Button {
         H: Math.min(Math.max(this.height(), 0), 200),
         L: Math.min(Math.max(this.left(), 0), 200),
         T: Math.min(Math.max(this.top(), 0), 200),
-        UCID: this.playerId() || 255,
+        UCID: this.playerId() ?? 255,
         ReqI: 2,
       }),
     );
@@ -331,16 +334,12 @@ export class Button {
     }
 
     for (const child of this.childs) {
-      if (typeof child.style === 'undefined') {
+      if (typeof child.style() === 'undefined') {
         child.style = this.style;
       }
 
-      if (typeof child.playerId === 'undefined') {
+      if (typeof child.playerId() === 'undefined') {
         child.playerId = this.playerId;
-      }
-
-      if (typeof child.isVisible === 'undefined') {
-        child.isVisible = this.isVisible;
       }
 
       child.create();

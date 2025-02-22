@@ -97,7 +97,7 @@ export class Event {
       const player = new Player(this.akairo);
 
       player.uniqueId = packet.UCID;
-      player.playerId = 0;
+      player.playerId = null as never;
       player.userName = packet.UName;
       player.playerName = packet.PName;
       player.isAdministrator = !!packet.Admin;
@@ -112,8 +112,9 @@ export class Event {
 
     if (player) {
       player.gameLanguage = packet.Language;
-      player.set('essentials.ip', packet.IPAddress);
-      player.set('essentials.license', packet.License);
+      player
+        .set('essentials.ip', packet.IPAddress)
+        .set('essentials.license', packet.License);
     }
   }
 
@@ -139,25 +140,26 @@ export class Event {
 
     if (player) {
       player.playerId = packet.PLID;
-      player.set('essentials.plate', packet.Plate);
-      player.set('essentials.player-type', packet.PType);
-      player.set('essentials.player-flags', packet.Flags);
-      player.set('essentials.car-name', packet.CName);
-      player.set('essentials.skin-name', packet.SName);
-      player.set('essentials.tyre-frontal-left', packet.TyreFL);
-      player.set('essentials.tyre-frontal-right', packet.TyreFR);
-      player.set('essentials.tyre-rear-left', packet.TyreRL);
-      player.set('essentials.tyre-rear-right', packet.TyreRR);
-      player.set('essentials.added-mass', packet.H_Mass);
-      player.set('essentials.intake-restriction', packet.H_TRes);
-      player.set('essentials.model', packet.Model);
-      player.set('essentials.passenger-flags', packet.Pass);
-      player.set('essentials.frontal-wheels-adjustment', packet.FWAdj);
-      player.set('essentials.rear-wheels-adjustment', packet.RWAdj);
-      player.set('essentials.race-number', packet.NumP);
-      player.set('essentials.car-configuration', packet.Config);
-      player.set('essentials.fuel', packet.Fuel);
-      player.set<PitStatus>('essentials.pit-status', 'TRACK');
+      player
+        .set('essentials.plate', packet.Plate)
+        .set('essentials.player-type', packet.PType)
+        .set('essentials.player-flags', packet.Flags)
+        .set('essentials.car-name', packet.CName)
+        .set('essentials.skin-name', packet.SName)
+        .set('essentials.tyre-frontal-left', packet.TyreFL)
+        .set('essentials.tyre-frontal-right', packet.TyreFR)
+        .set('essentials.tyre-rear-left', packet.TyreRL)
+        .set('essentials.tyre-rear-right', packet.TyreRR)
+        .set('essentials.added-mass', packet.H_Mass)
+        .set('essentials.intake-restriction', packet.H_TRes)
+        .set('essentials.model', packet.Model)
+        .set('essentials.passenger-flags', packet.Pass)
+        .set('essentials.frontal-wheels-adjustment', packet.FWAdj)
+        .set('essentials.rear-wheels-adjustment', packet.RWAdj)
+        .set('essentials.race-number', packet.NumP)
+        .set('essentials.car-configuration', packet.Config)
+        .set('essentials.fuel', packet.Fuel)
+        .set<PitStatus>('essentials.pit-status', 'TRACK');
     }
   }
 
@@ -202,21 +204,19 @@ export class Event {
       const player = this.akairo.players.getByPlayerId(info.PLID);
 
       if (player) {
-        player.set('essentials.position.x', Math.floor(info.X / 65536));
-        player.set('essentials.position.y', Math.floor(info.Y / 65536));
-        player.set('essentials.position.z', Math.floor(info.Z / 65536));
-        player.set('essentials.position.raw.x', info.X);
-        player.set('essentials.position.raw.y', info.Y);
-        player.set('essentials.position.raw.z', info.Z);
-        player.set(
-          'essentials.heading.angle',
-          Math.floor(info.Heading / 256 + 128),
-        );
-        player.set('essentials.heading.raw', info.Heading);
-        player.set('essentials.angle', Math.floor(info.AngVel / 16384));
-        player.set('essentials.speed.mph', Math.floor(info.Speed / 146.486067));
-        player.set('essentials.speed.kph', Math.floor(info.Speed / 91.02));
-        player.set('essentials.lap', info.Lap);
+        player
+          .set('essentials.position.x', Math.floor(info.X / 65536))
+          .set('essentials.position.y', Math.floor(info.Y / 65536))
+          .set('essentials.position.z', Math.floor(info.Z / 65536))
+          .set('essentials.position.raw.x', info.X)
+          .set('essentials.position.raw.y', info.Y)
+          .set('essentials.position.raw.z', info.Z)
+          .set('essentials.heading.angle', Math.floor(info.Heading / 256 + 128))
+          .set('essentials.heading.raw', info.Heading)
+          .set('essentials.angle', Math.floor(info.AngVel / 16384))
+          .set('essentials.speed.mph', Math.floor(info.Speed / 146.486067))
+          .set('essentials.speed.kph', Math.floor(info.Speed / 91.02))
+          .set('essentials.lap', info.Lap);
       }
     }
   }
