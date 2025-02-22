@@ -319,7 +319,10 @@ export class Button {
         ClickID: Math.min(Math.max(this.id(), 0), 239),
         BStyle: this.isVisible() ? this.style() : ButtonStyle.ISB_LEFT,
         Text: `\0${this.caption() ?? '\b'}\0${this.isVisible() ? (this.title() ?? '') : ''}`,
-        TypeIn: Math.min(Math.max(this.length(), 0), 95),
+        TypeIn:
+          this.length() === 255
+            ? 255
+            : Math.min(Math.max(this.length(), 0), 95),
         W: Math.min(Math.max(this.width(), 0), 200),
         H: Math.min(Math.max(this.height(), 0), 200),
         L: Math.min(Math.max(this.left(), 0), 200),
