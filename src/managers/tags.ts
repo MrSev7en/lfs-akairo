@@ -64,7 +64,7 @@ export class Tags {
   }
 
   private parsePlayerId(playerId: number | null): number | null {
-    return typeof playerId === 'number' && playerId > 0 ? playerId : null;
+    return typeof playerId === 'number' && playerId >= 0 ? playerId : null;
   }
 
   private createEntry(instance: Button): ButtonEntry {

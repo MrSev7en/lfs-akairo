@@ -87,7 +87,7 @@ export class Event {
     }
 
     logger.info('Event listener was successfully load.');
-    callback?.();
+    setTimeout(() => callback?.(), 0);
   }
 
   private onPlayerConnectHandler(packet: IS_NCN): void {
@@ -102,6 +102,7 @@ export class Event {
       player.playerName = packet.PName;
       player.isAdministrator = !!packet.Admin;
       player.gameLanguage = null as never;
+      player.isReady = false;
 
       this.akairo.players.list.push(player);
     }
@@ -112,6 +113,7 @@ export class Event {
 
     if (player) {
       player.gameLanguage = packet.Language;
+      player.isReady = true;
       player
         .set('essentials.ip', packet.IPAddress)
         .set('essentials.license', packet.License);

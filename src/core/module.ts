@@ -7,7 +7,16 @@ import {
   PacketType,
   UserType,
   type CompCar,
+  type IS_CNL,
+  type IS_CPR,
+  type IS_MCI,
   type IS_MSO,
+  type IS_NCI,
+  type IS_NCN,
+  type IS_NPL,
+  type IS_PLL,
+  type IS_PLP,
+  type IS_TOC,
 } from 'node-insim/packets';
 
 interface IPacket {
@@ -62,7 +71,7 @@ export class Module {
 
     const handlers = this.events.get(type) || [];
     const wrappedCallback = async (packet: T) => {
-      const player = this.getPlayerFromPacket(packet as IPacket);
+      const player = this.getPlayerFromPacket(packet as IPacket, type);
       const filter = createPacketFilter([PacketType.ISP_NCN])
         .onSuccess(() => callback(player, packet))
         .onFailed(() => player && callback(player, packet));
@@ -198,7 +207,7 @@ export class Module {
     if (!parsed) return;
 
     const { command, args } = parsed;
-    const player = this.getPlayerFromPacket(packet);
+    const player = this.getPlayerFromPacket(packet, PacketType.ISP_MSO);
 
     if (!player) return;
 
@@ -261,18 +270,127 @@ export class Module {
     await Promise.all(promises);
   }
 
-  private getPlayerFromPacket(packet: IPacket): Player {
+  private getPlayerFromPacket(packet: IPacket, type: PacketType): Player {
+    const player = () => {
+      switch (type) {
+        case PacketType.ISP_NCN: {
+          const parsed = packet as IS_NCN;
+
+          const byUserName = this.akairo.players.getByUserName(parsed.UName);
+          if (byUserName) return byUserName;
+
+          const byUniqueId = this.akairo.players.getByUniqueId(parsed.UCID);
+          if (byUniqueId) return byUniqueId;
+
+          return null;
+        }
+
+        case PacketType.ISP_NCI: {
+          const parsed = packet as IS_NCI;
+
+          const byUniqueId = this.akairo.players.getByUniqueId(parsed.UCID);
+          if (byUniqueId) return byUniqueId;
+
+          return null;
+        }
+
+        case PacketType.ISP_CNL: {
+          const parsed = packet as IS_CNL;
+
+          const byUniqueId = this.akairo.players.getByUniqueId(parsed.UCID);
+          if (byUniqueId) return byUniqueId;
+
+          return null;
+        }
+
+        case PacketType.ISP_NPL: {
+          const parsed = packet as IS_NPL;
+
+          const byUniqueId = this.akairo.players.getByUniqueId(parsed.UCID);
+          if (byUniqueId) return byUniqueId;
+
+          const byPlayerId = this.akairo.players.getByPlayerId(parsed.PLID);
+          if (byPlayerId) return byPlayerId;
+
+          return null;
+        }
+
+        case PacketType.ISP_PLP: {
+          const parsed = packet as IS_PLP;
+
+          const byPlayerId = this.akairo.players.getByPlayerId(parsed.PLID);
+          if (byPlayerId) return byPlayerId;
+
+          return null;
+        }
+
+        case PacketType.ISP_PLL: {
+          const parsed = packet as IS_PLL;
+
+          const byPlayerId = this.akairo.players.getByPlayerId(parsed.PLID);
+          if (byPlayerId) return byPlayerId;
+
+          return null;
+        }
+
+        case PacketType.ISP_TOC: {
+          const parsed = packet as IS_TOC;
+
+          // This can cause issues, since player list is updated.
+          const byOldUniqueId = this.akairo.players.getByUniqueId(
+            parsed.OldUCID,
+          );
+          if (byOldUniqueId) return byOldUniqueId;
+
+          // This can cause issues too, since may have an player with "NewUCID".
+          const byNewUniqueId = this.akairo.players.getByUniqueId(
+            parsed.NewUCID,
+          );
+          if (byNewUniqueId) return byNewUniqueId;
+
+          const byPlayerId = this.akairo.players.getByPlayerId(parsed.PLID);
+          if (byPlayerId) return byPlayerId;
+
+          return null;
+        }
+
+        case PacketType.ISP_CPR: {
+          const parsed = packet as IS_CPR;
+
+          const byUniqueId = this.akairo.players.getByUniqueId(parsed.UCID);
+          if (byUniqueId) return byUniqueId;
+
+          return null;
+        }
+
+        case PacketType.ISP_MCI: {
+          const parsed = packet as IS_MCI;
+
+          for (const info of parsed.Info) {
+            const byPlayerId = this.akairo.players.getByPlayerId(info.PLID);
+            if (byPlayerId) return byPlayerId;
+          }
+
+          return null;
+        }
+
+        default:
+          return null;
+      }
+    };
+
+    const find = player();
+    if (find) return find;
+
+    // Fallback in other packets.
     return this.akairo.players.list.find(
       (player) =>
         (typeof player.uniqueId === 'number' &&
+          player.uniqueId > 0 &&
           player.uniqueId === packet.UCID) ||
         (typeof player.playerId === 'number' &&
-          player.playerId === packet.PLID) ||
-        packet.Info?.some?.(
-          (info) =>
-            typeof player.playerId === 'number' &&
-            player.playerId === info.PLID,
-        ),
+          player.playerId >= 0 &&
+          player.playerId === packet.PLID),
     ) as Player;
   }
 }

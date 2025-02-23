@@ -86,7 +86,21 @@ export class Akairo {
   }): void {
     this.options = options;
 
+    // Calling after all events was bind.
+    const connect = () => {
+      this.insim.connect({
+        Host: this.options.host,
+        Port: this.options.port,
+        Admin: this.options.password,
+        IName: this.settings?.name,
+        Prefix: this.settings?.prefix,
+        Interval: this.settings?.interval,
+        Flags: this.settings?.flags,
+      });
+    };
+
     // We're hidding some packets, because it modifies player list and it can cause exceptions inside modules.
+    // This will bind all packets except: ISP_CNL, ISP_PLP and ISP_PLL.
     new Event(
       this,
       [PacketType.ISP_CNL, PacketType.ISP_PLP, PacketType.ISP_PLL],
@@ -95,6 +109,7 @@ export class Akairo {
           this.modules.forEach((module) => module.bind());
 
           // Now we bind hidden packets (excluding others).
+          // This will only bind: ISP_CNL, ISP_PLP and ISP_PLL.
           setTimeout(() => {
             new Event(this, [
               PacketType.ISP_NCN,
@@ -104,20 +119,15 @@ export class Akairo {
               PacketType.ISP_CPR,
               PacketType.ISP_MCI,
             ]);
-          });
-        });
+
+            // Wait binding ends to connect.
+            setTimeout(() => {
+              connect();
+            }, 0);
+          }, 0);
+        }, 0);
       },
     );
-
-    this.insim.connect({
-      Host: this.options.host,
-      Port: this.options.port,
-      Admin: this.options.password,
-      IName: this.settings?.name,
-      Prefix: this.settings?.prefix,
-      Interval: this.settings?.interval,
-      Flags: this.settings?.flags,
-    });
   }
 
   /**
