@@ -19,10 +19,10 @@ type BindingPackets =
   | PacketType.ISP_NCN
   | PacketType.ISP_NCI
   | PacketType.ISP_CNL
+  | PacketType.ISP_TOC
   | PacketType.ISP_NPL
   | PacketType.ISP_PLP
   | PacketType.ISP_PLL
-  | PacketType.ISP_TOC
   | PacketType.ISP_CPR
   | PacketType.ISP_MCI;
 
@@ -50,6 +50,12 @@ export class Event {
       );
     }
 
+    if (!exclude?.includes(PacketType.ISP_TOC)) {
+      this.akairo.insim.addListener(PacketType.ISP_TOC, (packet) =>
+        this.onPlayerChangeHandler(packet),
+      );
+    }
+
     if (!exclude?.includes(PacketType.ISP_NPL)) {
       this.akairo.insim.addListener(PacketType.ISP_NPL, (packet) =>
         this.onPlayerTrackHandler(packet),
@@ -65,12 +71,6 @@ export class Event {
     if (!exclude?.includes(PacketType.ISP_PLL)) {
       this.akairo.insim.addListener(PacketType.ISP_PLL, (packet) =>
         this.onPlayerSpectateHandler(packet),
-      );
-    }
-
-    if (!exclude?.includes(PacketType.ISP_TOC)) {
-      this.akairo.insim.addListener(PacketType.ISP_TOC, (packet) =>
-        this.onPlayerChangeHandler(packet),
       );
     }
 
@@ -184,11 +184,15 @@ export class Event {
   }
 
   private onPlayerChangeHandler(packet: IS_TOC): void {
-    const player = this.akairo.players.getByUniqueId(packet.OldUCID);
+    const oldPlayer = this.akairo.players.getByUniqueId(packet.OldUCID);
+    const newPlayer = this.akairo.players.getByUniqueId(packet.NewUCID);
 
-    if (player) {
-      player.uniqueId = packet.NewUCID;
-      player.playerId = packet.PLID;
+    if (oldPlayer && newPlayer) {
+      oldPlayer.remove('essentials.pit-status');
+      oldPlayer.playerId = null as never;
+
+      newPlayer.playerId = packet.PLID;
+      newPlayer.set<PitStatus>('essentials.pit-status', 'TRACK');
     }
   }
 

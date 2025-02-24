@@ -114,8 +114,8 @@ export class Akairo {
             new Event(this, [
               PacketType.ISP_NCN,
               PacketType.ISP_NCI,
-              PacketType.ISP_NPL,
               PacketType.ISP_TOC,
+              PacketType.ISP_NPL,
               PacketType.ISP_CPR,
               PacketType.ISP_MCI,
             ]);
