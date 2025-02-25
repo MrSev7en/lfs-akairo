@@ -2,6 +2,7 @@ import { Player } from '#classes/player';
 import type { Akairo } from '#core/akairo';
 import type { PitStatus } from '#types/player';
 import { logger } from '#utils/logger';
+import { randomString } from '#utils/random';
 import {
   type IS_CNL,
   type IS_CPR,
@@ -96,6 +97,7 @@ export class Event {
     if (!exists && packet.UName) {
       const player = new Player(this.akairo);
 
+      player.id = randomString();
       player.uniqueId = packet.UCID;
       player.playerId = null as never;
       player.userName = packet.UName;
@@ -129,10 +131,7 @@ export class Event {
     );
 
     if (index !== -1) {
-      this.akairo.tags.releaseAllUniqueIds(
-        this.akairo.players.list[index].uniqueId,
-      );
-
+      this.akairo.tags.releaseAllUniqueIds(this.akairo.players.list[index].id);
       this.akairo.players.list.splice(index, 1);
     }
   }

@@ -7,6 +7,9 @@ import type { Scope, TranslateOptions } from 'i18n-js';
 import { IS_MTC, type Language, type MessageSound } from 'node-insim/packets';
 
 export class Player {
+  /** Id inside Akairo (usually it is used internal, never changes until player logout) */
+  public id!: string;
+
   /** Unique id inside server (usually it is used in almost all of cases) */
   public uniqueId!: number;
 
@@ -65,7 +68,9 @@ export class Player {
    * Create an button instance to player.
    */
   public button(): Button {
-    return new Button(this.akairo).setPlayerId(() => this.uniqueId);
+    return new Button(this.akairo)
+      .setPlayerId(() => this.id)
+      .setPlayerUniqueId(() => this.uniqueId);
   }
 
   /**

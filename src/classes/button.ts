@@ -38,7 +38,10 @@ export class Button {
   public top!: () => number;
 
   /** Function that returns the player ID associated with the button */
-  public playerId!: () => number;
+  public playerId!: () => string;
+
+  /** Function that returns the player Unique ID associated with the button */
+  public playerUniqueId!: () => number;
 
   /** Function that determines if the button should only be clicked once */
   public clickOnce!: () => boolean;
@@ -72,6 +75,7 @@ export class Button {
     this.left = () => 0;
     this.top = () => 0;
     this.playerId = () => undefined as never;
+    this.playerUniqueId = () => undefined as never;
     this.clickOnce = () => false;
     this.isVisible = () => true;
   }
@@ -160,8 +164,18 @@ export class Button {
    * Sets the player ID associated with the button
    * @param playerId Function that returns the player ID
    */
-  public setPlayerId(playerId: () => number): Button {
+  public setPlayerId(playerId: () => string): Button {
     this.playerId = playerId;
+    this.update();
+    return this;
+  }
+
+  /**
+   * Sets the player Unique ID associated with the button
+   * @param playerUniqueId Function that returns the player Unique ID
+   */
+  public setPlayerUniqueId(playerUniqueId: () => number): Button {
+    this.playerUniqueId = playerUniqueId;
     this.update();
     return this;
   }
@@ -207,7 +221,10 @@ export class Button {
         : PacketType.ISP_BTC;
 
     const bind = (packet: IS_BTT | IS_BTC): void => {
-      if (packet.ClickID === this.id() && packet.UCID === this.playerId()) {
+      if (
+        packet.ClickID === this.id() &&
+        packet.UCID === this.playerUniqueId()
+      ) {
         const text = packet instanceof IS_BTT ? packet.Text : '';
 
         if (this.clickOnce()) {
@@ -235,7 +252,9 @@ export class Button {
    */
   public append(callback: (button: Button) => Button): this {
     const button = new Button(this.akairo);
+
     button.playerId = this.playerId;
+    button.playerUniqueId = this.playerUniqueId;
 
     this.appendChild(button);
     callback(button);
@@ -327,7 +346,7 @@ export class Button {
         H: Math.min(Math.max(this.height(), 0), 200),
         L: Math.min(Math.max(this.left(), 0), 200),
         T: Math.min(Math.max(this.top(), 0), 200),
-        UCID: this.playerId() ?? 255,
+        UCID: this.playerUniqueId() ?? 255,
         ReqI: 2,
       }),
     );
@@ -343,6 +362,10 @@ export class Button {
 
       if (typeof child.playerId() === 'undefined') {
         child.playerId = this.playerId;
+      }
+
+      if (typeof child.playerUniqueId() === 'undefined') {
+        child.playerUniqueId = this.playerUniqueId;
       }
 
       child.create();
@@ -361,7 +384,7 @@ export class Button {
 
     this.akairo.insim.send(
       new IS_BFN({
-        UCID: this.playerId(),
+        UCID: this.playerUniqueId(),
         ClickID: Math.min(Math.max(this.id(), 0), 239),
       }),
     );

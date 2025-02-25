@@ -39,7 +39,7 @@ export class Tags {
     return -1;
   }
 
-  public releaseUniqueId(playerId: number | null, id: number): void {
+  public releaseUniqueId(playerId: string | null, id: number): void {
     const parsedPlayerId = this.parsePlayerId(playerId);
     const key = this.createKey(parsedPlayerId, id);
 
@@ -48,7 +48,7 @@ export class Tags {
     }
   }
 
-  public releaseAllUniqueIds(playerId: number | null): void {
+  public releaseAllUniqueIds(playerId: string | null): void {
     const parsedPlayerId = this.parsePlayerId(playerId);
     const prefix = `${parsedPlayerId}:`;
 
@@ -59,19 +59,19 @@ export class Tags {
     });
   }
 
-  private createKey(playerId: number | null, id: number): string {
+  private createKey(playerId: string | null, id: number): string {
     return `${playerId}:${id}`;
   }
 
-  private parsePlayerId(playerId: number | null): number | null {
-    return typeof playerId === 'number' && playerId >= 0 ? playerId : null;
+  private parsePlayerId(playerId: string | null): string | null {
+    return typeof playerId === 'string' && playerId ? playerId : null;
   }
 
   private createEntry(instance: Button): ButtonEntry {
     return { instance, timestamp: Date.now() };
   }
 
-  private findOldestEntry(playerId: number | null): {
+  private findOldestEntry(playerId: string | null): {
     key: string;
     id: number;
     entry: ButtonEntry;
