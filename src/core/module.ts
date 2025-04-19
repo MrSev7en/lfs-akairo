@@ -386,7 +386,7 @@ export class Module {
     return this.akairo.players.list.find(
       (player) =>
         (typeof player.uniqueId === 'number' &&
-          player.uniqueId > 0 &&
+          player.uniqueId >= 0 &&
           player.uniqueId === packet.UCID) ||
         (typeof player.playerId === 'number' &&
           player.playerId >= 0 &&

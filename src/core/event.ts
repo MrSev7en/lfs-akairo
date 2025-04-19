@@ -104,7 +104,6 @@ export class Event {
       player.playerName = packet.PName;
       player.isAdministrator = !!packet.Admin;
       player.gameLanguage = null as never;
-      player.isReady = false;
 
       this.akairo.players.list.push(player);
     }
@@ -114,11 +113,11 @@ export class Event {
     const player = this.akairo.players.getByUniqueId(packet.UCID);
 
     if (player) {
-      player.gameLanguage = packet.Language;
-      player.isReady = true;
       player
         .set('essentials.ip', packet.IPAddress)
         .set('essentials.license', packet.License);
+      player.gameLanguage = packet.Language;
+      player.isReady = true;
     }
   }
 
@@ -126,7 +125,7 @@ export class Event {
     const index = this.akairo.players.list.findIndex(
       (player) =>
         typeof player.uniqueId === 'number' &&
-        player.uniqueId > 0 &&
+        player.uniqueId >= 0 &&
         player.uniqueId === packet.UCID,
     );
 

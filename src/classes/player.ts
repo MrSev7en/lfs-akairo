@@ -29,7 +29,7 @@ export class Player {
   public gameLanguage!: Language;
 
   /** Determines if player is fully assigned inside Akairo (useful in IS_NCI packet) */
-  public isReady!: boolean;
+  public isReady: boolean = false;
 
   /** Attributes saved in player instance */
   public selfData = {};

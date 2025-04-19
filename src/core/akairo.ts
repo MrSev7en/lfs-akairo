@@ -121,11 +121,9 @@ export class Akairo {
             ]);
 
             // Wait binding ends to connect.
-            setTimeout(() => {
-              connect();
-            }, 0);
-          }, 0);
-        }, 0);
+            setTimeout(() => connect());
+          });
+        });
       },
     );
   }

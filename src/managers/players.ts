@@ -18,7 +18,7 @@ export class Players {
     return this.list.find(
       (player) =>
         typeof player.uniqueId === 'number' &&
-        player.uniqueId > 0 &&
+        player.uniqueId >= 0 &&
         player.uniqueId === uniqueId,
     ) as Player;
   }
