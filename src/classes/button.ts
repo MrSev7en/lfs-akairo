@@ -292,7 +292,11 @@ export class Button {
   public update(): Button {
     if (
       typeof this.id() === 'undefined' ||
-      typeof this.player() === 'undefined'
+      typeof this.player() === 'undefined' ||
+      this.width() <= 0 ||
+      this.height() <= 0 ||
+      this.left() <= 0 ||
+      this.top() <= 0
     ) {
       return this;
     }
@@ -303,10 +307,10 @@ export class Button {
         BStyle: this.isVisible() ? this.style() : ButtonStyle.ISB_LEFT,
         Text: `\0${this.caption() ?? '\b'}\0${this.isVisible() ? this.title() : ''}`,
         TypeIn: Math.min(Math.max(this.length(), 0), 255),
-        W: Math.min(Math.max(this.width(), 0), 200),
-        H: Math.min(Math.max(this.height(), 0), 200),
-        L: Math.min(Math.max(this.left(), 0), 200),
-        T: Math.min(Math.max(this.top(), 0), 200),
+        W: Math.min(this.width(), 200),
+        H: Math.min(this.height(), 200),
+        L: Math.min(this.left(), 200),
+        T: Math.min(this.top(), 200),
         UCID: this.player() ? this.player().uniqueId : 255,
         ReqI: 2,
       }),
