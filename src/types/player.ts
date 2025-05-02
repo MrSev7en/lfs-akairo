@@ -1,4 +1,4 @@
-export type DataMap = {
+export interface Data {
   'essentials.ip': string;
   'essentials.license': number;
   'essentials.plate': string;
@@ -32,6 +32,6 @@ export type DataMap = {
   'essentials.speed.mph': number;
   'essentials.speed.kph': number;
   'essentials.lap': number;
-};
+}
 
-export type DataContent = keyof DataMap | (string & Record<never, never>);
+export type Content = keyof Data | (string & Record<never, never>);

@@ -1,6 +1,6 @@
 import { Button } from '#classes/button';
 import type { Akairo } from '#core/akairo';
-import type { DataContent, DataMap } from '#types/player';
+import type { Content, Data } from '#types/player';
 import { merge, objectify, remove, retrieve } from '#utils/data';
 import { convertLanguage, i18n } from '#utils/i18n';
 import type { Scope, TranslateOptions } from 'i18n-js';
@@ -125,9 +125,7 @@ export class Player {
    * @template T
    * @param path The path to the desired value, using dot notation
    */
-  public get<K extends DataContent>(
-    path: K,
-  ): K extends keyof DataMap ? DataMap[K] : any {
+  public get<K extends Content>(path: K): K extends keyof Data ? Data[K] : any {
     return retrieve(path, this.selfData);
   }
 
@@ -137,9 +135,9 @@ export class Player {
    * @param path The path where the value should be set, using dot notation
    * @param value The value to set at the specified path
    */
-  public set<K extends DataContent>(
+  public set<K extends Content>(
     path: K,
-    value: K extends keyof DataMap ? DataMap[K] : any,
+    value: K extends keyof Data ? Data[K] : any,
   ): Player {
     this.selfData = merge(this.selfData, objectify(path, value));
     return this;
@@ -149,7 +147,7 @@ export class Player {
    * Removes a specific key from the nested object structure based on the given path.
    * @param {string} path The path to the key that should be removed, using dot notation
    */
-  public remove<K extends DataContent>(path: K): Player {
+  public remove<K extends Content>(path: K): Player {
     this.selfData = remove(this.selfData, path.split('.'));
     return this;
   }
