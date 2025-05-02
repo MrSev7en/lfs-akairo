@@ -25,6 +25,7 @@
       },
       "style": {
         "noInferrableTypes": "off",
+        "noNonNullAssertion": "off",
         "noParameterAssign": "off"
       },
       "suspicious": {

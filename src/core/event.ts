@@ -1,8 +1,6 @@
 import { Player } from '#classes/player';
 import type { Akairo } from '#core/akairo';
-import type { PitStatus } from '#types/player';
 import { logger } from '#utils/logger';
-import { randomString } from '#utils/random';
 import {
   type IS_CNL,
   type IS_CPR,
@@ -97,15 +95,21 @@ export class Event {
     if (!exists && packet.UName) {
       const player = new Player(this.akairo);
 
-      player.id = randomString();
       player.uniqueId = packet.UCID;
-      player.playerId = null as never;
-      player.userName = packet.UName;
+      player.playerId = null!;
+      player.userName = this.akairo.settings?.filters?.userNameLowerCase
+        ? packet.UName.toLowerCase()
+        : packet.UName;
       player.playerName = packet.PName;
       player.isAdministrator = !!packet.Admin;
-      player.gameLanguage = null as never;
+      player.gameLanguage = null!;
 
-      this.akairo.players.list.push(player);
+      this.akairo.players.list.set(
+        this.akairo.settings?.filters?.userNameLowerCase
+          ? packet.UName.toLowerCase()
+          : packet.UName,
+        player,
+      );
     }
   }
 
@@ -122,16 +126,14 @@ export class Event {
   }
 
   private onPlayerLeftHandler(packet: IS_CNL): void {
-    const index = this.akairo.players.list.findIndex(
+    const player = Array.from(this.akairo.players.list.values()).find(
       (player) =>
-        typeof player.uniqueId === 'number' &&
-        player.uniqueId >= 0 &&
-        player.uniqueId === packet.UCID,
+        typeof player.uniqueId === 'number' && player.uniqueId === packet.UCID,
     );
 
-    if (index !== -1) {
-      this.akairo.tags.releaseAllUniqueIds(this.akairo.players.list[index].id);
-      this.akairo.players.list.splice(index, 1);
+    if (player) {
+      this.akairo.tags.releaseAllUniqueIds(player);
+      this.akairo.players.list.delete(player.userName);
     }
   }
 
@@ -159,7 +161,7 @@ export class Event {
         .set('essentials.race-number', packet.NumP)
         .set('essentials.car-configuration', packet.Config)
         .set('essentials.fuel', packet.Fuel)
-        .set<PitStatus>('essentials.pit-status', 'TRACK');
+        .set('essentials.pit-status', 'TRACK');
     }
   }
 
@@ -167,8 +169,8 @@ export class Event {
     const player = this.akairo.players.getByPlayerId(packet.PLID);
 
     if (player) {
-      player.playerId = null as never;
-      player.set<PitStatus>('essentials.pit-status', 'PIT');
+      player.playerId = null!;
+      player.set('essentials.pit-status', 'PIT');
     }
   }
 
@@ -176,8 +178,8 @@ export class Event {
     const player = this.akairo.players.getByPlayerId(packet.PLID);
 
     if (player) {
-      player.playerId = null as never;
-      player.set<PitStatus>('essentials.pit-status', 'SPECTATE');
+      player.playerId = null!;
+      player.set('essentials.pit-status', 'SPECTATE');
     }
   }
 
@@ -186,11 +188,13 @@ export class Event {
     const newPlayer = this.akairo.players.getByUniqueId(packet.NewUCID);
 
     if (oldPlayer && newPlayer) {
+      const oldPlayerPitStatus = oldPlayer.get('essentials.pit-status');
+
       oldPlayer.remove('essentials.pit-status');
-      oldPlayer.playerId = null as never;
+      oldPlayer.playerId = null!;
 
       newPlayer.playerId = packet.PLID;
-      newPlayer.set<PitStatus>('essentials.pit-status', 'TRACK');
+      newPlayer.set('essentials.pit-status', oldPlayerPitStatus);
     }
   }
 

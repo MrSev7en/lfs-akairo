@@ -2,12 +2,21 @@
   "name": "lfs-akairo",
   "description": "LFS Akairo is a framework designed to simplify the creation of InSim applications.",
   "author": "Eduardo <contato.eduardo24@gmail.com>",
-  "keywords": ["lfs", "akairo", "insim", "node-insim", "node", "typescript"],
-  "version": "0.0.14",
+  "keywords": [
+    "lfs",
+    "akairo",
+    "insim",
+    "node-insim",
+    "node",
+    "typescript"
+  ],
+  "version": "0.0.15",
   "license": "MIT",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/MrSev7en/lfs-akairo"
@@ -25,15 +34,15 @@
   },
   "dependencies": {
     "i18n-js": "^4.5.1",
-    "node-insim": "^4.6.0",
+    "node-insim": "^4.6.3",
     "pino": "^9.6.0",
     "pino-pretty": "^13.0.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
-    "@types/node": "^20.17.16",
+    "@types/node": "^20.17.32",
     "rimraf": "^5.0.10",
-    "tsup": "^8.3.6",
-    "typescript": "^5.7.3"
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.3"
   }
 }

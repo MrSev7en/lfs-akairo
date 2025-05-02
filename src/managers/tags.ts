@@ -1,4 +1,5 @@
 import type { Button } from '#classes/button';
+import { Player } from '#classes/player';
 import type { Akairo } from '#core/akairo';
 
 interface ButtonEntry {
@@ -8,92 +9,94 @@ interface ButtonEntry {
 
 export class Tags {
   private maxId = 240;
-  private instances: Record<string, ButtonEntry> = {};
+  private instances = new Map<string, ButtonEntry>();
 
   public constructor(public readonly akairo: Akairo) {}
 
-  public getUniqueId(instance: Button): number {
-    const playerId = instance.playerId() ?? null;
+  public getId(instance: Button): number {
+    const player = instance.player();
 
     for (let id = 0; id < this.maxId; id++) {
-      const key = this.createKey(playerId, id);
+      const key = this.createKey(player, id);
 
-      if (!this.instances[key]) {
-        this.instances[key] = this.createEntry(instance);
+      if (!this.instances.has(key)) {
+        this.instances.set(key, this.createEntry(instance));
         return id;
       }
     }
 
-    const oldestEntry = this.findOldestEntry(playerId);
+    const oldestEntry = this.findOldestEntry(player);
 
     if (oldestEntry) {
       oldestEntry.entry.instance.destroy();
-      delete this.instances[oldestEntry.key];
+      this.instances.delete(oldestEntry.key);
 
-      const newKey = this.createKey(playerId, oldestEntry.id);
-      this.instances[newKey] = this.createEntry(instance);
+      const readOldestEntry = this.readKey(oldestEntry.key);
+      const newKey = this.createKey(player, readOldestEntry.buttonId);
+      this.instances.set(newKey, this.createEntry(instance));
 
-      return oldestEntry.id;
+      return readOldestEntry.buttonId;
     }
 
     return -1;
   }
 
-  public releaseUniqueId(playerId: string | null, id: number): void {
-    const parsedPlayerId = this.parsePlayerId(playerId);
-    const key = this.createKey(parsedPlayerId, id);
+  public releaseUniqueId(player: Player, id: number): void {
+    const key = this.createKey(player, id);
+    this.instances.delete(key);
+  }
 
-    if (this.instances[key]) {
-      delete this.instances[key];
+  public releaseAllUniqueIds(player: Player): void {
+    const targetPlayer = this.parsePlayer(player);
+
+    for (const [key] of this.instances) {
+      const read = this.readKey(key);
+
+      if (read.playerUserName === targetPlayer) {
+        this.instances.delete(key);
+      }
     }
   }
 
-  public releaseAllUniqueIds(playerId: string | null): void {
-    const parsedPlayerId = this.parsePlayerId(playerId);
-    const prefix = `${parsedPlayerId}:`;
-
-    Object.keys(this.instances).forEach((key) => {
-      if (key.startsWith(prefix)) {
-        delete this.instances[key];
-      }
-    });
+  private createKey(player: Player, id: number) {
+    return [this.parsePlayer(player), id].join(':');
   }
 
-  private createKey(playerId: string | null, id: number): string {
-    return `${playerId}:${id}`;
+  private readKey(key: string) {
+    const split = String(key).split(':');
+    const exists = !!split.length;
+    const playerUserName = exists ? split[0] : '';
+    const buttonId = exists && !Number.isNaN(split[1]) ? Number(split[1]) : 0;
+
+    return { playerUserName, buttonId };
   }
 
-  private parsePlayerId(playerId: string | null): string | null {
-    return typeof playerId === 'string' && playerId ? playerId : null;
+  private parsePlayer(player: Player): string {
+    return player instanceof Player && player.userName
+      ? player.userName
+      : null!;
   }
 
   private createEntry(instance: Button): ButtonEntry {
     return { instance, timestamp: Date.now() };
   }
 
-  private findOldestEntry(playerId: string | null): {
+  private findOldestEntry(player: Player): {
     key: string;
-    id: number;
     entry: ButtonEntry;
   } | null {
-    const targetPlayer = playerId !== null ? String(playerId) : 'null';
-    let oldest: {
-      key: string;
-      id: number;
-      entry: ButtonEntry;
-    } | null = null;
+    const targetPlayer = this.parsePlayer(player);
+    let oldest: { key: string; entry: ButtonEntry } | null = null;
 
-    Object.entries(this.instances).forEach(([key, entry]) => {
-      const [storedPlayer, id] = key.split(':');
+    for (const [key, entry] of this.instances) {
+      const read = this.readKey(key);
 
-      if (storedPlayer === targetPlayer) {
-        const numericId = Number.parseInt(id);
-
+      if (read.playerUserName === targetPlayer) {
         if (!oldest || entry.timestamp < oldest.entry.timestamp) {
-          oldest = { key, id: numericId, entry };
+          oldest = { key, entry };
         }
       }
-    });
+    }
 
     return oldest;
   }

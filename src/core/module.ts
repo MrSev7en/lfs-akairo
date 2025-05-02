@@ -383,14 +383,12 @@ export class Module {
     if (find) return find;
 
     // Fallback in other packets.
-    return this.akairo.players.list.find(
+    return Array.from(this.akairo.players.list.values()).find(
       (player) =>
         (typeof player.uniqueId === 'number' &&
-          player.uniqueId >= 0 &&
           player.uniqueId === packet.UCID) ||
         (typeof player.playerId === 'number' &&
-          player.playerId >= 0 &&
           player.playerId === packet.PLID),
-    ) as Player;
+    )!;
   }
 }

@@ -1,5 +1,5 @@
 import { Event } from '#core/event';
-import { Module } from '#core/module';
+import type { Module } from '#core/module';
 import { Cars } from '#managers/cars';
 import { Players } from '#managers/players';
 import { Tags } from '#managers/tags';
@@ -16,6 +16,8 @@ import {
   type InSimFlags,
 } from 'node-insim/packets';
 
+type ModuleConstructor<T extends Module> = new (akairo: Akairo) => T;
+
 export class Akairo {
   /** InSim instance for server communication */
   public insim!: InSim;
@@ -27,7 +29,7 @@ export class Akairo {
   public cars!: Cars;
 
   /** List of loaded modules */
-  public modules!: Module[];
+  public modules!: Map<ModuleConstructor<Module>, Module>;
 
   /** List of loaded localization data */
   public locales!: Locale<any>[];
@@ -50,6 +52,7 @@ export class Akairo {
    * @param settings.interval Update interval in milliseconds (used in IS_MCI updates)
    * @param settings.interface Interface update interval in milliseconds (used in button interface updates)
    * @param settings.flags InSim flags for connection configuration
+   * @param settings.filters.userNameLowerCase Player username will be stored in lower case
    */
   public constructor(
     public readonly settings?: {
@@ -59,12 +62,13 @@ export class Akairo {
       interval?: number;
       interface?: number;
       flags?: InSimFlags;
+      filters?: { userNameLowerCase?: boolean };
     },
   ) {
     this.insim = new InSim(this.settings?.id);
     this.players = new Players(this);
     this.cars = new Cars(this);
-    this.modules = [];
+    this.modules = new Map();
     this.locales = [];
     this.tags = new Tags(this);
 
@@ -152,11 +156,19 @@ export class Akairo {
   }
 
   /**
+   * Get a module instantiated internally.
+   * @param module Module class to be get
+   */
+  public getModule<T extends Module>(module: ModuleConstructor<T>): T {
+    return this.modules.get(module) as T;
+  }
+
+  /**
    * Loads a module into the system.
    * @param module Module class to be loaded
    */
-  public loadModule(module: new (akairo: Akairo) => Module): void {
-    this.modules.push(new module(this));
+  public loadModule<T extends Module>(module: ModuleConstructor<T>): void {
+    this.modules.set(module, new module(this));
     logger.info(`Module "${module.name}" was load.`);
   }
 
@@ -164,14 +176,14 @@ export class Akairo {
    * Unloads a module from the system.
    * @param module Module class to be unloaded
    */
-  public unloadModule(module: new (akairo: Akairo) => Module): void {
-    const index = this.modules.findIndex((m) => Module.bind(m).name);
+  public unloadModule<T extends Module>(module: ModuleConstructor<T>): void {
+    const found = this.modules.get(module);
 
-    if (index !== -1) {
-      this.modules.splice(index, 1);
-      logger.warn(`Module "${module}" was unload.`);
+    if (found) {
+      this.modules.delete(module);
+      logger.warn(`Module "${module.name}" was unload.`);
     } else {
-      logger.error(`Module "${module}" was not found.`);
+      logger.error(`Module "${module.name}" was not found.`);
     }
   }
 
@@ -183,7 +195,7 @@ export class Akairo {
    */
   public loadLocale<T>(language: Language, content: T): void {
     const locale = convertLanguage(language);
-    const values = { [locale]: content } as Dict;
+    const values: Dict = { [locale]: content };
 
     i18n.store(values);
     this.locales.push({ language, content });
@@ -223,7 +235,6 @@ export class Akairo {
 
   private bindInSimReceptors(): void {
     this.insim.send(new IS_TINY({ SubT: TinyType.TINY_VER, ReqI: 2 }));
-    this.insim.send(new IS_TINY({ SubT: TinyType.TINY_PING, ReqI: 2 }));
     this.insim.send(new IS_TINY({ SubT: TinyType.TINY_NCN, ReqI: 2 }));
     this.insim.send(new IS_TINY({ SubT: TinyType.TINY_NCI, ReqI: 2 }));
     this.insim.send(new IS_TINY({ SubT: TinyType.TINY_NPL, ReqI: 2 }));

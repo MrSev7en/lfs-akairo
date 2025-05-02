@@ -6,7 +6,7 @@ export class Players {
    * List of all active players
    * @readonly
    */
-  public readonly list: Player[] = [];
+  public readonly list: Map<string, Player> = new Map();
 
   public constructor(public readonly akairo: Akairo) {}
 
@@ -15,12 +15,10 @@ export class Players {
    * @param uniqueId The unique identifier of the player
    */
   public getByUniqueId(uniqueId: number): Player {
-    return this.list.find(
+    return Array.from(this.list.values()).find(
       (player) =>
-        typeof player.uniqueId === 'number' &&
-        player.uniqueId >= 0 &&
-        player.uniqueId === uniqueId,
-    ) as Player;
+        typeof player.uniqueId === 'number' && player.uniqueId === uniqueId,
+    )!;
   }
 
   /**
@@ -28,12 +26,10 @@ export class Players {
    * @param playerId The player ID to search for
    */
   public getByPlayerId(playerId: number): Player {
-    return this.list.find(
+    return Array.from(this.list.values()).find(
       (player) =>
-        typeof player.playerId === 'number' &&
-        player.playerId >= 0 &&
-        player.playerId === playerId,
-    ) as Player;
+        typeof player.playerId === 'number' && player.playerId === playerId,
+    )!;
   }
 
   /**
@@ -41,9 +37,11 @@ export class Players {
    * @param userName The username to search for
    */
   public getByUserName(userName: string): Player {
-    return this.list.find(
-      (player) => player.userName.toLowerCase() === userName.toLowerCase(),
-    ) as Player;
+    return this.list.get(
+      this.akairo.settings?.filters?.userNameLowerCase
+        ? userName.toLowerCase()
+        : userName,
+    )!;
   }
 
   /**
@@ -51,8 +49,8 @@ export class Players {
    * @param playerName The player name to search for
    */
   public getByPlayerName(playerName: string): Player {
-    return this.list.find(
+    return Array.from(this.list.values()).find(
       (player) => player.playerName === playerName,
-    ) as Player;
+    )!;
   }
 }

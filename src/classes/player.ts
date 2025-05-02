@@ -1,15 +1,12 @@
 import { Button } from '#classes/button';
 import type { Akairo } from '#core/akairo';
-import type { PitStatus } from '#types/player';
+import type { DataContent, DataMap } from '#types/player';
 import { merge, objectify, remove, retrieve } from '#utils/data';
 import { convertLanguage, i18n } from '#utils/i18n';
 import type { Scope, TranslateOptions } from 'i18n-js';
 import { IS_MTC, type Language, type MessageSound } from 'node-insim/packets';
 
 export class Player {
-  /** Id inside Akairo (usually it is used internal, never changes until player logout) */
-  public id!: string;
-
   /** Unique id inside server (usually it is used in almost all of cases) */
   public uniqueId!: number;
 
@@ -68,9 +65,7 @@ export class Player {
    * Create an button instance to player.
    */
   public button(): Button {
-    return new Button(this.akairo)
-      .setPlayerId(() => this.id)
-      .setPlayerUniqueId(() => this.uniqueId);
+    return new Button(this.akairo).setPlayer(() => this);
   }
 
   /**
@@ -81,13 +76,14 @@ export class Player {
    * @param radius Margin radius to compare if player is in position
    */
   public close(x: number, y: number, z: number, radius: number): boolean {
-    const pitStatus = this.get<PitStatus>('essentials.pit-status');
-    const positionX = this.get<number>('essentials.position.x');
-    const positionY = this.get<number>('essentials.position.y');
-    const positionZ = this.get<number>('essentials.position.x');
+    const pitStatus = this.get('essentials.pit-status');
+    if (pitStatus !== 'TRACK') return false;
+
+    const positionX = this.get('essentials.position.x');
+    const positionY = this.get('essentials.position.y');
+    const positionZ = this.get('essentials.position.x');
 
     return (
-      pitStatus === 'TRACK' &&
       Math.abs(positionX - x) <= radius &&
       Math.abs(positionY - y) <= radius &&
       Math.abs(positionZ - z) <= radius
@@ -99,25 +95,24 @@ export class Player {
    * @param radius Margin radius to search for players
    */
   public closer(radius: number): Player[] {
-    const positionX = this.get<number>('essentials.position.x');
-    const positionY = this.get<number>('essentials.position.y');
-    const positionZ = this.get<number>('essentials.position.x');
-    const pitStatus = this.get<PitStatus>('essentials.pit-status');
+    const pitStatus = this.get('essentials.pit-status');
+    if (pitStatus !== 'TRACK') return [];
 
-    if (pitStatus !== 'TRACK') {
-      return [];
-    }
+    const positionX = this.get('essentials.position.x');
+    const positionY = this.get('essentials.position.y');
+    const positionZ = this.get('essentials.position.x');
 
-    return this.akairo.players.list.filter((player) => {
-      const otherPositionX = player.get<number>('essentials.position.x');
-      const otherPositionY = player.get<number>('essentials.position.y');
-      const otherPositionZ = player.get<number>('essentials.position.z');
-      const otherPitStatus = player.get<PitStatus>('essentials.pit-status');
+    return Array.from(this.akairo.players.list.values()).filter((player) => {
+      const otherPitStatus = player.get('essentials.pit-status');
+      if (otherPitStatus !== 'TRACK') return false;
+
+      const otherPositionX = player.get('essentials.position.x');
+      const otherPositionY = player.get('essentials.position.y');
+      const otherPositionZ = player.get('essentials.position.z');
 
       return (
         player.uniqueId !== this.uniqueId &&
         player.playerId !== this.playerId &&
-        otherPitStatus === 'TRACK' &&
         Math.abs(positionX - otherPositionX) <= radius &&
         Math.abs(positionY - otherPositionY) <= radius &&
         Math.abs(positionZ - otherPositionZ) <= radius
@@ -128,19 +123,24 @@ export class Player {
   /**
    * Retrieves the value from the nested object structure based on the given path.
    * @template T
-   * @param {string} path The path to the desired value, using dot notation
+   * @param path The path to the desired value, using dot notation
    */
-  public get<T = any>(path: string): T {
+  public get<K extends DataContent>(
+    path: K,
+  ): K extends keyof DataMap ? DataMap[K] : any {
     return retrieve(path, this.selfData);
   }
 
   /**
    * Sets a value in the nested object structure based on the given path.
    * @template T
-   * @param {string} path The path where the value should be set, using dot notation
-   * @param {T} value The value to set at the specified path
+   * @param path The path where the value should be set, using dot notation
+   * @param value The value to set at the specified path
    */
-  public set<T = any>(path: string, value: T): Player {
+  public set<K extends DataContent>(
+    path: K,
+    value: K extends keyof DataMap ? DataMap[K] : any,
+  ): Player {
     this.selfData = merge(this.selfData, objectify(path, value));
     return this;
   }
@@ -149,7 +149,7 @@ export class Player {
    * Removes a specific key from the nested object structure based on the given path.
    * @param {string} path The path to the key that should be removed, using dot notation
    */
-  public remove(path: string): Player {
+  public remove<K extends DataContent>(path: K): Player {
     this.selfData = remove(this.selfData, path.split('.'));
     return this;
   }

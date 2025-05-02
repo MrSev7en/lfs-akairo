@@ -91,10 +91,10 @@ export class Cars {
    * @param {Player} player The player whose coordinates will be retrieved
    */
   public getPlayerCarCoordinates(player: Player) {
-    const x = player.get<number>('essentials.position.raw.x');
-    const y = player.get<number>('essentials.position.raw.y');
-    const z = player.get<number>('essentials.position.raw.z');
-    const heading = player.get<number>('essentials.heading.raw');
+    const x = player.get('essentials.position.raw.x');
+    const y = player.get('essentials.position.raw.y');
+    const z = player.get('essentials.position.raw.z');
+    const heading = player.get('essentials.heading.raw');
 
     return this.parseCoordinates({ x, y, z, heading });
   }
