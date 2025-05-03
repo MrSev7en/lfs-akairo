@@ -81,7 +81,7 @@ export class Player {
 
     const positionX = this.get('essentials.position.x');
     const positionY = this.get('essentials.position.y');
-    const positionZ = this.get('essentials.position.x');
+    const positionZ = this.get('essentials.position.z');
 
     return (
       Math.abs(positionX - x) <= radius &&
@@ -100,7 +100,7 @@ export class Player {
 
     const positionX = this.get('essentials.position.x');
     const positionY = this.get('essentials.position.y');
-    const positionZ = this.get('essentials.position.x');
+    const positionZ = this.get('essentials.position.z');
 
     return Array.from(this.akairo.players.list.values()).filter((player) => {
       const otherPitStatus = player.get('essentials.pit-status');
