@@ -44,7 +44,7 @@ export class Player {
    * @param scope Translation scope
    * @param options Translation scope options
    */
-  public t(path: string, scope: $Dictionary): string {
+  public t(path: string, scope?: $Dictionary): string {
     const locale = convertLanguage(this.gameLanguage);
     return i18next.t(path, { ...scope, ns: locale, lng: locale });
   }
