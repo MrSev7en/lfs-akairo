@@ -2,6 +2,7 @@ import { Event } from '#core/event';
 import type { Module } from '#core/module';
 import { Cars } from '#managers/cars';
 import { Players } from '#managers/players';
+import * as packageJson from '#package';
 import type { Locale } from '#types/locale';
 import { convertLanguage } from '#utils/i18n';
 import { logger } from '#utils/logger';
@@ -87,46 +88,38 @@ export class Akairo {
   }): void {
     this.options = options;
 
-    // Calling after all events was bind.
-    const connect = () => {
-      this.insim.connect({
-        Host: this.options.host,
-        Port: this.options.port,
-        Admin: this.options.password,
-        IName: this.settings?.name,
-        Prefix: this.settings?.prefix,
-        Interval: this.settings?.interval,
-        Flags: this.settings?.flags,
-      });
-    };
-
     // We're hidding some packets, because it modifies player list and it can cause exceptions inside modules.
     // This will bind all packets except: ISP_CNL, ISP_PLP and ISP_PLL.
-    new Event(
-      this,
-      [PacketType.ISP_CNL, PacketType.ISP_PLP, PacketType.ISP_PLL],
-      () => {
-        setTimeout(() => {
-          this.modules.forEach((module) => module.bind());
+    new Event(this, [
+      PacketType.ISP_CNL,
+      PacketType.ISP_PLP,
+      PacketType.ISP_PLL,
+    ]);
 
-          // Now we bind hidden packets (excluding others).
-          // This will only bind: ISP_CNL, ISP_PLP and ISP_PLL.
-          setTimeout(() => {
-            new Event(this, [
-              PacketType.ISP_NCN,
-              PacketType.ISP_NCI,
-              PacketType.ISP_TOC,
-              PacketType.ISP_NPL,
-              PacketType.ISP_CPR,
-              PacketType.ISP_MCI,
-            ]);
+    for (const [, module] of this.modules) {
+      module.bind();
+    }
 
-            // Wait binding ends to connect.
-            setTimeout(() => connect());
-          });
-        });
-      },
-    );
+    // Now we bind hidden packets (excluding others).
+    // This will only bind: ISP_CNL, ISP_PLP and ISP_PLL.
+    new Event(this, [
+      PacketType.ISP_NCN,
+      PacketType.ISP_NCI,
+      PacketType.ISP_NPL,
+      PacketType.ISP_TOC,
+      PacketType.ISP_CPR,
+      PacketType.ISP_MCI,
+    ]);
+
+    this.insim.connect({
+      Host: this.options.host,
+      Port: this.options.port,
+      Admin: this.options.password,
+      IName: this.settings?.name,
+      Prefix: this.settings?.prefix,
+      Interval: this.settings?.interval,
+      Flags: this.settings?.flags,
+    });
   }
 
   /**
@@ -254,6 +247,8 @@ export class Akairo {
     this.insim.send(new IS_TINY({ SubT: TinyType.TINY_PLH, ReqI: 2 }));
     this.insim.send(new IS_TINY({ SubT: TinyType.TINY_IPB, ReqI: 2 }));
 
-    logger.info('LFS Akairo was successfully connected and working!');
+    logger.info(
+      `LFS Akairo v${packageJson.version} was successfully connected and working!`,
+    );
   }
 }

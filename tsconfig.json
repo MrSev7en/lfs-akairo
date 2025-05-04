@@ -14,6 +14,7 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "paths": {
+      "#package": ["./package.json"],
       "#classes/*": ["./src/classes/*"],
       "#core/*": ["./src/core/*"],
       "#managers/*": ["./src/managers/*"],

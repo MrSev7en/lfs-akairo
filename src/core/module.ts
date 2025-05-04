@@ -1,6 +1,5 @@
 import type { Player } from '#classes/player';
 import type { Akairo } from '#core/akairo';
-import { createPacketFilter } from '#core/filter';
 import type { Players } from '#managers/players';
 import { logger } from '#utils/logger';
 import {
@@ -90,16 +89,12 @@ export class Module {
     }
 
     const handlers = this.events.get(type) || [];
-    const wrappedCallback = async (packet: T) => {
+    const fallback = async (packet: T) => {
       const player = this.getPlayerFromPacket(packet as IPacket, type);
-      const filter = createPacketFilter([PacketType.ISP_NCN])
-        .onSuccess(() => callback(player, packet))
-        .onFailed(() => player && callback(player, packet));
-
-      filter.filter(type);
+      callback(player, packet);
     };
 
-    handlers.push({ type, callback: wrappedCallback });
+    handlers.push({ type, callback: fallback });
     this.events.set(type, handlers);
   }
 
@@ -177,16 +172,15 @@ export class Module {
   public bind(): void {
     this.unbind();
 
-    this.events.forEach((handlers, type) => {
-      handlers.forEach((handler) => {
-        setTimeout(() => {
-          this.akairo.insim.addListener(type, this.createSafeListener(handler));
-        });
-      });
-    });
+    for (const [type, handlers] of this.events) {
+      for (const handler of handlers) {
+        this.akairo.insim.addListener(type, handler.callback);
+      }
+    }
 
-    this.akairo.insim.addListener(PacketType.ISP_MSO, (packet) =>
-      this.handleMessage(packet),
+    this.akairo.insim.addListener(
+      PacketType.ISP_MSO,
+      this.handleMessage.bind(this),
     );
   }
 
@@ -194,30 +188,16 @@ export class Module {
    * Unbind all packets insidee this module through InSim
    */
   public unbind(): void {
-    this.events.forEach((handlers, type) => {
-      handlers.forEach((handler) => {
-        this.akairo.insim.removeListener(
-          type,
-          this.createSafeListener(handler),
-        );
-      });
-    });
-
-    this.akairo.insim.removeListener(PacketType.ISP_MSO, (packet) =>
-      this.handleMessage(packet),
-    );
-  }
-
-  private createSafeListener<T>(handler: EventHandler<T>) {
-    return async (packet: T) => {
-      try {
-        await handler.callback(packet);
-      } catch (error) {
-        logger.error(
-          `Error handling packet ${PacketType[handler.type]}: "${error}"`,
-        );
+    for (const [type, handlers] of this.events) {
+      for (const handler of handlers) {
+        this.akairo.insim.removeListener(type, handler.callback);
       }
-    };
+    }
+
+    this.akairo.insim.removeListener(
+      PacketType.ISP_MSO,
+      this.handleMessage.bind(this),
+    );
   }
 
   private async handleMessage(packet: IS_MSO): Promise<void> {
