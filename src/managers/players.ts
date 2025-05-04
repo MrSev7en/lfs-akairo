@@ -22,10 +22,7 @@ export class Players {
    * @param uniqueId The unique identifier of the player
    */
   public getByUniqueId(uniqueId: number): Player {
-    return this.array().find(
-      (player) =>
-        typeof player.uniqueId === 'number' && player.uniqueId === uniqueId,
-    )!;
+    return this.array().find((player) => player.uniqueId === uniqueId)!;
   }
 
   /**
@@ -33,10 +30,7 @@ export class Players {
    * @param playerId The player ID to search for
    */
   public getByPlayerId(playerId: number): Player {
-    return this.array().find(
-      (player) =>
-        typeof player.playerId === 'number' && player.playerId === playerId,
-    )!;
+    return this.array().find((player) => player.playerId === playerId)!;
   }
 
   /**

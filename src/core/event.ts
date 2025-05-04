@@ -140,7 +140,10 @@ export class Event {
   }
 
   private onPlayerTrackHandler(packet: IS_NPL): void {
-    const player = this.akairo.players.getByUniqueId(packet.UCID);
+    const player =
+      this.akairo.players.getByUniqueId(packet.UCID) ??
+      this.akairo.players.getByPlayerId(packet.PLID) ??
+      this.akairo.players.getByPlayerName(packet.PName);
 
     if (player) {
       player.playerId = packet.PLID;

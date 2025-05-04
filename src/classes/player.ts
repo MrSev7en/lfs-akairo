@@ -99,10 +99,40 @@ export class Player {
   }
 
   /**
+   * Send player to pitlane.
+   */
+  public pitlane(): Player {
+    this.akairo.insim.sendMessage(`/pitlane ${this.userName}`);
+    return this;
+  }
+
+  /**
    * Send player to spectator.
    */
   public spectate(): Player {
     this.akairo.insim.sendMessage(`/spec ${this.userName}`);
+    return this;
+  }
+
+  /**
+   * Set player vehicle added mass.
+   */
+  public mass(percentage: number): Player {
+    this.akairo.insim.sendMessage(
+      `/h_mass ${this.userName} ${Math.max(percentage, 0)}`,
+    );
+
+    return this;
+  }
+
+  /**
+   * Set player vehicle intake restriction (0% - 50%).
+   */
+  public restriction(percentage: number): Player {
+    this.akairo.insim.sendMessage(
+      `/h_tres ${this.userName} ${Math.min(Math.max(percentage, 0), 50)}`,
+    );
+
     return this;
   }
 

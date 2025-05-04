@@ -298,62 +298,49 @@ export class Module {
       switch (type) {
         case PacketType.ISP_NCN: {
           const parsed = packet as IS_NCN;
+          const found =
+            this.akairo.players.getByUserName(parsed.UName) ??
+            this.akairo.players.getByUniqueId(parsed.UCID);
 
-          const byUserName = this.akairo.players.getByUserName(parsed.UName);
-          if (byUserName) return byUserName;
-
-          const byUniqueId = this.akairo.players.getByUniqueId(parsed.UCID);
-          if (byUniqueId) return byUniqueId;
-
-          return null;
+          return found;
         }
 
         case PacketType.ISP_NCI: {
           const parsed = packet as IS_NCI;
+          const found = this.akairo.players.getByUniqueId(parsed.UCID);
 
-          const byUniqueId = this.akairo.players.getByUniqueId(parsed.UCID);
-          if (byUniqueId) return byUniqueId;
-
-          return null;
+          return found;
         }
 
         case PacketType.ISP_CNL: {
           const parsed = packet as IS_CNL;
+          const found = this.akairo.players.getByUniqueId(parsed.UCID);
 
-          const byUniqueId = this.akairo.players.getByUniqueId(parsed.UCID);
-          if (byUniqueId) return byUniqueId;
-
-          return null;
+          return found;
         }
 
         case PacketType.ISP_NPL: {
           const parsed = packet as IS_NPL;
+          const found =
+            this.akairo.players.getByUniqueId(parsed.UCID) ??
+            this.akairo.players.getByPlayerId(parsed.PLID) ??
+            this.akairo.players.getByPlayerName(parsed.PName);
 
-          const byUniqueId = this.akairo.players.getByUniqueId(parsed.UCID);
-          if (byUniqueId) return byUniqueId;
-
-          const byPlayerId = this.akairo.players.getByPlayerId(parsed.PLID);
-          if (byPlayerId) return byPlayerId;
-
-          return null;
+          return found;
         }
 
         case PacketType.ISP_PLP: {
           const parsed = packet as IS_PLP;
+          const found = this.akairo.players.getByPlayerId(parsed.PLID);
 
-          const byPlayerId = this.akairo.players.getByPlayerId(parsed.PLID);
-          if (byPlayerId) return byPlayerId;
-
-          return null;
+          return found;
         }
 
         case PacketType.ISP_PLL: {
           const parsed = packet as IS_PLL;
+          const found = this.akairo.players.getByPlayerId(parsed.PLID);
 
-          const byPlayerId = this.akairo.players.getByPlayerId(parsed.PLID);
-          if (byPlayerId) return byPlayerId;
-
-          return null;
+          return found;
         }
 
         case PacketType.ISP_TOC: {
@@ -379,16 +366,14 @@ export class Module {
 
         case PacketType.ISP_CPR: {
           const parsed = packet as IS_CPR;
+          const found = this.akairo.players.getByUniqueId(parsed.UCID);
 
-          const byUniqueId = this.akairo.players.getByUniqueId(parsed.UCID);
-          if (byUniqueId) return byUniqueId;
-
-          return null;
+          return found;
         }
 
         case PacketType.ISP_MCI: {
-          const parsed = packet as IS_MCI;
           const list: Player[] = [];
+          const parsed = packet as IS_MCI;
 
           for (const info of parsed.Info) {
             const byPlayerId = this.akairo.players.getByPlayerId(info.PLID);
