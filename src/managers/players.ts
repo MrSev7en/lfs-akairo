@@ -11,11 +11,18 @@ export class Players {
   public constructor(public readonly akairo: Akairo) {}
 
   /**
+   * Retrieves player list as array.
+   */
+  public array(): Player[] {
+    return Array.from(this.list.values());
+  }
+
+  /**
    * Retrieves a player by their unique identifier.
    * @param uniqueId The unique identifier of the player
    */
   public getByUniqueId(uniqueId: number): Player {
-    return Array.from(this.list.values()).find(
+    return this.array().find(
       (player) =>
         typeof player.uniqueId === 'number' && player.uniqueId === uniqueId,
     )!;
@@ -26,7 +33,7 @@ export class Players {
    * @param playerId The player ID to search for
    */
   public getByPlayerId(playerId: number): Player {
-    return Array.from(this.list.values()).find(
+    return this.array().find(
       (player) =>
         typeof player.playerId === 'number' && player.playerId === playerId,
     )!;
@@ -49,8 +56,6 @@ export class Players {
    * @param playerName The player name to search for
    */
   public getByPlayerName(playerName: string): Player {
-    return Array.from(this.list.values()).find(
-      (player) => player.playerName === playerName,
-    )!;
+    return this.array().find((player) => player.playerName === playerName)!;
   }
 }

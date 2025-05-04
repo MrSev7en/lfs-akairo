@@ -64,6 +64,26 @@ export class Module {
   public onPacket<T>(
     type: PacketType,
     callback: (player: Player, packet: T) => Promise<void>,
+  ): void;
+
+  /**
+   * Registers a packet handler for a specific packet type.
+   * @param type The type of packet to handle
+   * @param callback Function to be called when packet is received
+   */
+  public onPacket(
+    type: PacketType.ISP_MCI,
+    callback: (players: Player[], packet: PacketType.ISP_MCI) => Promise<void>,
+  ): void;
+
+  /**
+   * Registers a packet handler for a specific packet type.
+   * @param type The type of packet to handle
+   * @param callback Function to be called when packet is received
+   */
+  public onPacket<T>(
+    type: PacketType,
+    callback: (...args: any[]) => Promise<void>,
   ): void {
     if (!Object.values(PacketType).includes(type)) {
       throw new Error(`Invalid packet type: ${type}`);
@@ -214,9 +234,9 @@ export class Module {
     const commandExists = this.registeredCommands.has(command.toLowerCase());
 
     if (commandExists) {
-      await this.handleKnownCommand(command, args, player);
+      await this.handleKnownCommand(command, args, player as Player);
     } else {
-      await this.handleUnknownCommand(command, args, player);
+      await this.handleUnknownCommand(command, args, player as Player);
     }
   }
 
@@ -270,7 +290,10 @@ export class Module {
     await Promise.all(promises);
   }
 
-  private getPlayerFromPacket(packet: IPacket, type: PacketType): Player {
+  private getPlayerFromPacket(
+    packet: IPacket,
+    type: PacketType,
+  ): Player | Player[] {
     const player = () => {
       switch (type) {
         case PacketType.ISP_NCN: {
@@ -365,13 +388,17 @@ export class Module {
 
         case PacketType.ISP_MCI: {
           const parsed = packet as IS_MCI;
+          const list: Player[] = [];
 
           for (const info of parsed.Info) {
             const byPlayerId = this.akairo.players.getByPlayerId(info.PLID);
-            if (byPlayerId) return byPlayerId;
+
+            if (byPlayerId) {
+              list.push(byPlayerId);
+            }
           }
 
-          return null;
+          return list;
         }
 
         default:
@@ -383,12 +410,14 @@ export class Module {
     if (find) return find;
 
     // Fallback in other packets.
-    return Array.from(this.akairo.players.list.values()).find(
-      (player) =>
-        (typeof player.uniqueId === 'number' &&
-          player.uniqueId === packet.UCID) ||
-        (typeof player.playerId === 'number' &&
-          player.playerId === packet.PLID),
-    )!;
+    return this.akairo.players
+      .array()
+      .find(
+        (player) =>
+          (typeof player.uniqueId === 'number' &&
+            player.uniqueId === packet.UCID) ||
+          (typeof player.playerId === 'number' &&
+            player.playerId === packet.PLID),
+      )!;
   }
 }

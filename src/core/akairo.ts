@@ -2,7 +2,6 @@ import { Event } from '#core/event';
 import type { Module } from '#core/module';
 import { Cars } from '#managers/cars';
 import { Players } from '#managers/players';
-import { Tags } from '#managers/tags';
 import type { Locale } from '#types/locale';
 import { convertLanguage, i18n } from '#utils/i18n';
 import { logger } from '#utils/logger';
@@ -33,9 +32,6 @@ export class Akairo {
 
   /** List of loaded localization data */
   public locales!: Locale<any>[];
-
-  /** Tag management instance */
-  public tags!: Tags;
 
   private onConnectHandler!: () => void;
 
@@ -70,7 +66,6 @@ export class Akairo {
     this.cars = new Cars(this);
     this.modules = new Map();
     this.locales = [];
-    this.tags = new Tags(this);
 
     this.insim.on('connect', () => this.onInSimConnect());
     this.insim.on('disconnect', () => this.onInSimDisconnect());

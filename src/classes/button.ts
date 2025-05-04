@@ -41,9 +41,6 @@ export class Button {
   /** Function that returns the button's top position */
   public top!: () => number;
 
-  /** Function that returns the player associated with the button */
-  public player!: () => Player;
-
   /** Function that determines if the button should only be clicked once */
   public clickOnce!: () => boolean;
 
@@ -65,8 +62,17 @@ export class Button {
   /** Handler for update events */
   private onUpdateHandler!: (button: Button) => void;
 
-  public constructor(public readonly akairo: Akairo) {
+  public constructor(public readonly player: Player) {
     this.resetProperties();
+  }
+
+  /**
+   * Sets the button's id
+   * @param id Button id
+   */
+  public setId(id: () => number): this {
+    this.id = id;
+    return this.queueUpdate();
   }
 
   /**
@@ -142,15 +148,6 @@ export class Button {
   }
 
   /**
-   * Sets the player associated with the button
-   * @param player Function that returns the player
-   */
-  public setPlayer(player: () => Player): this {
-    this.player = player;
-    return this.queueUpdate();
-  }
-
-  /**
    * Sets whether the button should only be clicked once
    * @param clickOnce Function that returns the clickOnce boolean
    */
@@ -191,7 +188,7 @@ export class Button {
     const bind = (packet: IS_BTT | IS_BTC): void => {
       if (
         packet.ClickID === this.id() &&
-        packet.UCID === this.player().uniqueId
+        packet.UCID === this.player.uniqueId
       ) {
         const text = packet instanceof IS_BTT ? packet.Text : '';
 
@@ -204,12 +201,12 @@ export class Button {
     };
 
     const unbind = (): void => {
-      this.akairo.insim.removeListener(type, bind);
+      this.player.akairo.insim.removeListener(type, bind);
       this.unbind = undefined!;
     };
 
     this.unbind = unbind;
-    this.akairo.insim.addListener(type, bind);
+    this.player.akairo.insim.addListener(type, bind);
 
     return this;
   }
@@ -217,38 +214,21 @@ export class Button {
   /**
    * Appends a child button to this button
    * @param callback A single button callback (already instantiated)
+   * @param disableAutoUpdate Whether to disable automatic state updates
    */
-  public append(callback: (button: Button) => Button): this {
-    const button = new Button(this.akairo);
+  public append(
+    callback: (button: Button) => Button,
+    disableAutoUpdate?: boolean,
+  ): this {
+    const button = this.player.button();
 
-    button.player = this.player;
+    button.style = this.style;
+    button.isVisible = this.isVisible;
     button.parent = this;
+    button.create(disableAutoUpdate);
 
-    this.appendChild(button);
+    this.childs.push(button);
     callback(button);
-
-    return this;
-  }
-
-  /**
-   * Appends one or more child buttons to this button
-   * @param buttons A single button, array of buttons, or null
-   */
-  public appendChild(buttons: Button | Button[] | null): this {
-    const addButton = (button: Button) => {
-      if (!button.style()) button.style = this.style;
-      if (!button.player()) button.player = this.player;
-      if (!button.parent) button.parent = this;
-
-      this.childs.push(button);
-      button.create();
-    };
-
-    if (Array.isArray(buttons)) {
-      buttons.filter(Boolean).forEach(addButton);
-    } else if (buttons) {
-      addButton(buttons);
-    }
 
     return this;
   }
@@ -257,7 +237,7 @@ export class Button {
    * Removes a child button
    * @param button The button to remove
    */
-  public removeChild(button: Button): this {
+  public remove(button: Button): this {
     const index = this.childs.findIndex((c) => c.id() === button.id());
 
     if (index !== -1) {
@@ -273,11 +253,7 @@ export class Button {
    * @param disableAutoUpdate Whether to disable automatic state updates
    */
   public create(disableAutoUpdate?: boolean): Button {
-    if (typeof this.id() === 'undefined') {
-      const { id } = Object.freeze({ ...{ id: this.akairo.tags.getId(this) } });
-      this.id = () => id;
-    }
-
+    if (typeof this.id() === 'undefined') return null!;
     if (!disableAutoUpdate) {
       this.manageAutoUpdate();
     }
@@ -292,16 +268,14 @@ export class Button {
   public update(): Button {
     if (
       typeof this.id() === 'undefined' ||
-      typeof this.player() === 'undefined' ||
+      typeof this.player === 'undefined' ||
       this.width() <= 0 ||
-      this.height() <= 0 ||
-      this.left() <= 0 ||
-      this.top() <= 0
+      this.height() <= 0
     ) {
       return this;
     }
 
-    this.akairo.insim.send(
+    this.player.akairo.insim.send(
       new IS_BTN({
         ClickID: Math.min(Math.max(this.id(), 0), 239),
         BStyle: this.isVisible() ? this.style() : ButtonStyle.ISB_LEFT,
@@ -311,7 +285,7 @@ export class Button {
         H: Math.min(this.height(), 200),
         L: Math.min(this.left(), 200),
         T: Math.min(this.top(), 200),
-        UCID: this.player() ? this.player().uniqueId : 255,
+        UCID: this.player ? this.player.uniqueId : 255,
         ReqI: 2,
       }),
     );
@@ -330,10 +304,14 @@ export class Button {
       return this;
     }
 
+    if (this.player.buttons.has(this.id())) {
+      this.player.buttons.delete(this.id());
+    }
+
     this.destroyAllChildren();
-    this.akairo.insim.send(
+    this.player.akairo.insim.send(
       new IS_BFN({
-        UCID: this.player().uniqueId,
+        UCID: this.player.uniqueId,
         ClickID: Math.min(Math.max(this.id(), 0), 239),
       }),
     );
@@ -351,35 +329,35 @@ export class Button {
   }
 
   private manageAutoUpdate(): void {
-    let buttons = Button.autoUpdateButtons.get(this.akairo);
+    let buttons = Button.autoUpdateButtons.get(this.player.akairo);
 
     if (!buttons) {
       buttons = new Set();
-      Button.autoUpdateButtons.set(this.akairo, buttons);
+      Button.autoUpdateButtons.set(this.player.akairo, buttons);
     }
 
     buttons.add(this);
 
-    if (!Button.autoUpdateInterval.has(this.akairo)) {
+    if (!Button.autoUpdateInterval.has(this.player.akairo)) {
       const interval = setInterval(() => {
-        const currentButtons = Button.autoUpdateButtons.get(this.akairo);
+        const currentButtons = Button.autoUpdateButtons.get(this.player.akairo);
 
         if (!currentButtons || currentButtons.size === 0) {
           clearInterval(interval);
-          Button.autoUpdateInterval.delete(this.akairo);
+          Button.autoUpdateInterval.delete(this.player.akairo);
 
           return;
         }
 
         currentButtons.forEach((button) => button.update());
-      }, this.akairo.settings?.interface ?? 1000);
+      }, this.player.akairo.settings?.interface ?? 1000);
 
-      Button.autoUpdateInterval.set(this.akairo, interval);
+      Button.autoUpdateInterval.set(this.player.akairo, interval);
     }
   }
 
   private queueUpdate(): this {
-    if (!Button.autoUpdateButtons.get(this.akairo)?.has(this)) {
+    if (!Button.autoUpdateButtons.get(this.player.akairo)?.has(this)) {
       this.update();
     }
 
@@ -388,9 +366,6 @@ export class Button {
 
   private updateChildren(): void {
     for (const child of this.childs) {
-      if (!child.style()) child.style = this.style;
-      if (!child.player()) child.player = this.player;
-
       child.update();
     }
   }
@@ -402,23 +377,22 @@ export class Button {
   }
 
   private cleanupProperties(): void {
-    const buttons = Button.autoUpdateButtons.get(this.akairo);
+    const buttons = Button.autoUpdateButtons.get(this.player.akairo);
 
     if (buttons) {
       buttons.delete(this);
 
       if (buttons.size === 0) {
-        const interval = Button.autoUpdateInterval.get(this.akairo);
+        const interval = Button.autoUpdateInterval.get(this.player.akairo);
 
         if (interval) {
           clearInterval(interval);
-          Button.autoUpdateInterval.delete(this.akairo);
+          Button.autoUpdateInterval.delete(this.player.akairo);
         }
       }
     }
 
     this.unbind?.();
-    this.akairo.tags.releaseUniqueId(this.player(), this.id());
     this.resetProperties();
 
     for (const child of this.childs) {
@@ -436,7 +410,6 @@ export class Button {
     this.height = () => 0;
     this.left = () => 0;
     this.top = () => 0;
-    this.player = () => undefined!;
     this.clickOnce = () => false;
     this.isVisible = () => true;
   }

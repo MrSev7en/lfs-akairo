@@ -31,7 +31,12 @@ export class Player {
   /** Attributes saved in player instance */
   public selfData = {};
 
-  public constructor(public readonly akairo: Akairo) {}
+  /** Button instantiated list */
+  public buttons!: Map<number, Button>;
+
+  public constructor(public readonly akairo: Akairo) {
+    this.buttons = new Map();
+  }
 
   /**
    * Translate an content to player.
@@ -65,7 +70,40 @@ export class Player {
    * Create an button instance to player.
    */
   public button(): Button {
-    return new Button(this.akairo).setPlayer(() => this);
+    let availableId = -1;
+
+    for (let id = 0; id < 240; id++) {
+      if (!this.buttons.has(id)) {
+        availableId = id;
+        break;
+      }
+    }
+
+    if (availableId === -1) {
+      const oldestEntry = this.buttons.entries().next().value;
+      if (!oldestEntry) return null!;
+
+      availableId = oldestEntry[0];
+      const previous = this.buttons.get(availableId);
+
+      this.buttons.delete(availableId);
+      previous?.destroy?.();
+    }
+
+    const instance = new Button(this);
+
+    instance.setId(() => availableId);
+    this.buttons.set(availableId, instance);
+
+    return instance;
+  }
+
+  /**
+   * Send player to spectator.
+   */
+  public spectate(): Player {
+    this.akairo.insim.sendMessage(`/spec ${this.userName}`);
+    return this;
   }
 
   /**
@@ -102,7 +140,7 @@ export class Player {
     const positionY = this.get('essentials.position.y');
     const positionZ = this.get('essentials.position.z');
 
-    return Array.from(this.akairo.players.list.values()).filter((player) => {
+    return this.akairo.players.array().filter((player) => {
       const otherPitStatus = player.get('essentials.pit-status');
       if (otherPitStatus !== 'TRACK') return false;
 

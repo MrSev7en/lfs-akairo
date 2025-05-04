@@ -126,13 +126,15 @@ export class Event {
   }
 
   private onPlayerLeftHandler(packet: IS_CNL): void {
-    const player = Array.from(this.akairo.players.list.values()).find(
-      (player) =>
-        typeof player.uniqueId === 'number' && player.uniqueId === packet.UCID,
-    );
+    const player = this.akairo.players
+      .array()
+      .find(
+        (player) =>
+          typeof player.uniqueId === 'number' &&
+          player.uniqueId === packet.UCID,
+      );
 
     if (player) {
-      this.akairo.tags.releaseAllUniqueIds(player);
       this.akairo.players.list.delete(player.userName);
     }
   }
