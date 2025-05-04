@@ -3,9 +3,9 @@ import type { Module } from '#core/module';
 import { Cars } from '#managers/cars';
 import { Players } from '#managers/players';
 import type { Locale } from '#types/locale';
-import { convertLanguage, i18n } from '#utils/i18n';
+import { convertLanguage } from '#utils/i18n';
 import { logger } from '#utils/logger';
-import type { Dict } from 'i18n-js';
+import i18next from 'i18next';
 import { InSim } from 'node-insim';
 import {
   IS_TINY,
@@ -61,6 +61,8 @@ export class Akairo {
       filters?: { userNameLowerCase?: boolean };
     },
   ) {
+    i18next.init({ ns: [], resources: {} });
+
     this.insim = new InSim(this.settings?.id);
     this.players = new Players(this);
     this.cars = new Cars(this);
@@ -190,10 +192,11 @@ export class Akairo {
    */
   public loadLocale<T>(language: Language, content: T): void {
     const locale = convertLanguage(language);
-    const values: Dict = { [locale]: content };
+    const parsed = content as any;
+    const values = parsed?.default ?? parsed;
 
-    i18n.store(values);
-    this.locales.push({ language, content });
+    i18next.addResourceBundle(locale, locale, values);
+    this.locales.push({ language, content: values });
 
     logger.info(`Locale "${Language[language]}" was load.`);
   }

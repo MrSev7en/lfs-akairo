@@ -2,8 +2,9 @@ import { Button } from '#classes/button';
 import type { Akairo } from '#core/akairo';
 import type { Content, Data } from '#types/player';
 import { merge, objectify, remove, retrieve } from '#utils/data';
-import { convertLanguage, i18n } from '#utils/i18n';
-import type { Scope, TranslateOptions } from 'i18n-js';
+import { convertLanguage } from '#utils/i18n';
+import i18next from 'i18next';
+import type { $Dictionary } from 'i18next/typescript/helpers';
 import { IS_MTC, type Language, type MessageSound } from 'node-insim/packets';
 
 export class Player {
@@ -43,9 +44,9 @@ export class Player {
    * @param scope Translation scope
    * @param options Translation scope options
    */
-  public t(scope: Scope, options?: TranslateOptions): string {
-    i18n.locale = convertLanguage(this.gameLanguage);
-    return i18n.t(scope, options);
+  public t(path: string, scope: $Dictionary): string {
+    const locale = convertLanguage(this.gameLanguage);
+    return i18next.t(path, { ...scope, ns: locale, lng: locale });
   }
 
   /**
