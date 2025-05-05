@@ -60,7 +60,6 @@ export class Player {
         Text: String(content),
         Sound: sound,
         UCID: this.uniqueId,
-        PLID: this.playerId,
       }),
     );
 
@@ -132,6 +131,17 @@ export class Player {
   public restriction(percentage: number): Player {
     this.akairo.insim.sendMessage(
       `/h_tres ${this.userName} ${Math.min(Math.max(percentage, 0), 50)}`,
+    );
+
+    return this;
+  }
+
+  /**
+   * Toggle player available siren.
+   */
+  public siren(enabled: boolean): Player {
+    this.akairo.insim.sendMessage(
+      `/cansiren ${this.userName} ${enabled ? 1 : 0}`,
     );
 
     return this;
