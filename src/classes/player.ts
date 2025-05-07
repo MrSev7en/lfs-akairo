@@ -115,6 +115,14 @@ export class Player {
   }
 
   /**
+   * Nove player from spectator to track.
+   */
+  public ujoin(): Player {
+    this.akairo.insim.sendMessage(`/ujoin ${this.userName}`);
+    return this;
+  }
+
+  /**
    * Set player vehicle added mass.
    */
   public mass(percentage: number): Player {

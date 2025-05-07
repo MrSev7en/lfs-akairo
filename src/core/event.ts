@@ -26,74 +26,44 @@ type BindingPackets =
   | PacketType.ISP_MCI;
 
 export class Event {
+  private handlers: Map<BindingPackets, (...args: any[]) => void> = new Map();
+
   public constructor(
     public readonly akairo: Akairo,
     public readonly exclude: BindingPackets[],
   ) {
-    if (!this.exclude.includes(PacketType.ISP_NCN)) {
-      this.akairo.insim.addListener(
-        PacketType.ISP_NCN,
-        this.onPlayerConnectHandler.bind(this),
-      );
+    this.initialize();
+    logger.info('Event listener was successfully loaded.');
+  }
+
+  private initialize(): void {
+    const bind = (type: BindingPackets, handler: (packet: any) => void) => {
+      if (!this.exclude.includes(type)) {
+        const bound = handler.bind(this);
+
+        this.handlers.set(type, bound);
+        this.akairo.insim.addListener(type, bound);
+      }
+    };
+
+    bind(PacketType.ISP_NCN, this.onPlayerConnectHandler);
+    bind(PacketType.ISP_NCI, this.onPlayerDetailsHandler);
+    bind(PacketType.ISP_CNL, this.onPlayerLeftHandler);
+    bind(PacketType.ISP_NPL, this.onPlayerTrackHandler);
+    bind(PacketType.ISP_PLP, this.onPlayerPitHandler);
+    bind(PacketType.ISP_PLL, this.onPlayerSpectateHandler);
+    bind(PacketType.ISP_TOC, this.onPlayerChangeHandler);
+    bind(PacketType.ISP_CPR, this.onPlayerRenameHandler);
+    bind(PacketType.ISP_MCI, this.onCarMovementHandler);
+  }
+
+  public destroy(): void {
+    for (const [type, handler] of this.handlers) {
+      this.akairo.insim.removeListener(type, handler);
     }
 
-    if (!this.exclude.includes(PacketType.ISP_NCI)) {
-      this.akairo.insim.addListener(
-        PacketType.ISP_NCI,
-        this.onPlayerDetailsHandler.bind(this),
-      );
-    }
-
-    if (!this.exclude.includes(PacketType.ISP_CNL)) {
-      this.akairo.insim.addListener(
-        PacketType.ISP_CNL,
-        this.onPlayerLeftHandler.bind(this),
-      );
-    }
-
-    if (!this.exclude.includes(PacketType.ISP_NPL)) {
-      this.akairo.insim.addListener(
-        PacketType.ISP_NPL,
-        this.onPlayerTrackHandler.bind(this),
-      );
-    }
-
-    if (!this.exclude.includes(PacketType.ISP_PLP)) {
-      this.akairo.insim.addListener(
-        PacketType.ISP_PLP,
-        this.onPlayerPitHandler.bind(this),
-      );
-    }
-
-    if (!this.exclude.includes(PacketType.ISP_PLL)) {
-      this.akairo.insim.addListener(
-        PacketType.ISP_PLL,
-        this.onPlayerSpectateHandler.bind(this),
-      );
-    }
-
-    if (!this.exclude.includes(PacketType.ISP_TOC)) {
-      this.akairo.insim.addListener(
-        PacketType.ISP_TOC,
-        this.onPlayerChangeHandler.bind(this),
-      );
-    }
-
-    if (!this.exclude.includes(PacketType.ISP_CPR)) {
-      this.akairo.insim.addListener(
-        PacketType.ISP_CPR,
-        this.onPlayerRenameHandler.bind(this),
-      );
-    }
-
-    if (!this.exclude.includes(PacketType.ISP_MCI)) {
-      this.akairo.insim.addListener(
-        PacketType.ISP_MCI,
-        this.onCarMovementHandler.bind(this),
-      );
-    }
-
-    logger.info('Event listener was successfully load.');
+    this.handlers.clear();
+    logger.info('Event listeners were successfully removed.');
   }
 
   private onPlayerConnectHandler(packet: IS_NCN): void {
@@ -112,7 +82,7 @@ export class Event {
       player.isAdministrator = !!packet.Admin;
       player.gameLanguage = null!;
 
-      this.akairo.players.list.set(userName, player);
+      this.akairo.players.list.set(packet.UCID, player);
     }
   }
 
@@ -128,17 +98,7 @@ export class Event {
   }
 
   private onPlayerLeftHandler(packet: IS_CNL): void {
-    const player = this.akairo.players
-      .array()
-      .find(
-        (player) =>
-          typeof player.uniqueId === 'number' &&
-          player.uniqueId === packet.UCID,
-      );
-
-    if (player) {
-      this.akairo.players.list.delete(player.userName);
-    }
+    this.akairo.players.list.delete(packet.UCID);
   }
 
   private onPlayerTrackHandler(packet: IS_NPL): void {

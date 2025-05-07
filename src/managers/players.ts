@@ -6,7 +6,7 @@ export class Players {
    * List of all active players
    * @readonly
    */
-  public readonly list: Map<string, Player> = new Map();
+  public readonly list: Map<number, Player> = new Map();
 
   public constructor(public readonly akairo: Akairo) {}
 
@@ -22,7 +22,7 @@ export class Players {
    * @param uniqueId The unique identifier of the player
    */
   public getByUniqueId(uniqueId: number): Player {
-    return this.array().find((player) => player.uniqueId === uniqueId)!;
+    return this.list.get(uniqueId)!;
   }
 
   /**
@@ -38,10 +38,12 @@ export class Players {
    * @param userName The username to search for
    */
   public getByUserName(userName: string): Player {
-    return this.list.get(
-      this.akairo.settings?.filters?.userNameLowerCase
-        ? userName.toLowerCase()
-        : userName,
+    return this.array().find(
+      (player) =>
+        player.userName ===
+        (this.akairo.settings?.filters?.userNameLowerCase
+          ? userName.toLowerCase()
+          : userName),
     )!;
   }
 
